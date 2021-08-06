@@ -139,7 +139,7 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
         files.add("DOGEUSDT-2021-07-24");
         files.add("DOGEUSDT-2021-07-25");
         files.add("DOGEUSDT-2021-07-31");
-        files.add("DOGEUSDT-2021-08-5");
+        files.add("DOGEUSDT-2021-08-6");
         List<Candlestick> candlesticks = new ArrayList<>();
         for (String filename : files) {
             System.out.println(filename);

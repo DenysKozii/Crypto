@@ -155,8 +155,9 @@ public class TradingServiceImpl implements TradingService {
             writer.write(row);
             writer.close();
 
-            BufferedWriter writer2 = new BufferedWriter(new FileWriter("responses/" + wave.getSymbol() + "-" + date, true));
-            String row2 = wave.getClose() + " " + time + " " + true + "\n";
+            BufferedWriter writer2 = new BufferedWriter(new FileWriter("responses/" + wave.getSymbol() + "-" + date.toString(), true));
+            String row2 = String.format("%s %s%n",
+                    wave.getClose(), time);
             writer2.write(row2);
             writer2.close();
         } catch (IOException e) {
