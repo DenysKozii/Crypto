@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:replace="~{common :: header(value='Info')}"></div>
+<body>
+<div class="bg-light">
+    <div class="container bg-light">
+        <h3>Raised USDT = <small th:text="${USDT}"></small></h3>
+        <h3>Passive USDT = <small th:text="${passiveUSDT}"></small> from <small th:text="${passiveUSDTTime}"></small></h3>
+        <h3>Current low = <small th:text="${low}"></small> at <small th:text="${lowTime}"></small></h3>
+        <h3>Current high = <small th:text="${high}"></small> at <small th:text="${highTime}"></small></h3>
+    </div>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th scope="col">Time</th>
+            <th scope="col">Action</th>
+            <th scope="col">Price</th>
+            <th scope="col">Low</th>
+            <th scope="col">High</th>
+            <th scope="col">Date</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="qv,iter : ${infos}">
+            <td th:text="${qv.getTime()}"></td>
+            <td th:text="${qv.getAction()}"></td>
+            <td th:text="${qv.getPrice()}"></td>
+            <td th:text="${qv.getLow()}"></td>
+            <td th:text="${qv.getHigh()}"></td>
+            <td th:text="${qv.getDate()}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+<div th:replace="~{common :: js-lb}"></div>
+</html>

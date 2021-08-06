@@ -1,0 +1,213 @@
+
+//    @Override
+//    public double rate(WaveDto wave, Candlestick response) {
+//        double responseClose = Double.parseDouble(response.getClose());
+//        double onePercent = (wave.getHigh() - wave.getLow()) * 0.01;
+//        double rateInChannel = (responseClose - wave.getLow()) / onePercent;
+//        if (response.getVolume().equals("true")) {
+//            wave.getEma1().update(responseClose);
+//            wave.getEma2().update(responseClose);
+//            wave.getEma3().update(responseClose);
+//        }
+//
+//        double ema1 = wave.getEma1().get();
+//        double ema2 = wave.getEma2().get();
+//        double ema3 = wave.getEma3().get();
+//        if (responseClose <= wave.getLow() && WaveAction.BUY.equals(wave.getWaveAction())){
+//            wave.setWaveAction(WaveAction.SELL);
+//            wave.setDumpSignal(true);
+//            wave.setPumpSignal(false);
+//            wave.setLow(responseClose);
+//            return wave.getWaveAction().getValue();
+//        }
+//        if (!wave.getReady()) {
+//            wave.setWaveAction(WaveAction.WAIT);
+//            if (response.getVolume().equals("true")) {
+//                if (responseClose <= wave.getValue() - 0.0001) {
+//                    if (wave.getDumpSignal()) {
+//                        wave.setStatusCounter(wave.getStatusCounter() + 1);
+//                    } else {
+//                        wave.setStatusCounter(1);
+////                        wave.setHigh(responseClose);
+//                    }
+//                    wave.setDumpSignal(true);
+//                    wave.setPumpSignal(false);
+//                    wave.setLow(responseClose);
+//                } else {
+//                    if (responseClose >= wave.getValue() + 0.0001) {
+//                        if (wave.getPumpSignal()) {
+//                            wave.setStatusCounter(wave.getStatusCounter() + 1);
+//                        } else {
+//                            wave.setStatusCounter(1);
+////                            wave.setLow(responseClose);
+//                        }
+//                        wave.setDumpSignal(false);
+//                        wave.setPumpSignal(true);
+//                        wave.setHigh(responseClose);
+//                    }
+//                }
+//                if ((wave.getHigh() - wave.getLow()) >= delta && wave.getValue() != 0)
+//                    wave.setReady(true);
+//                if (wave.getPumpSignal())
+//                System.out.println(response.getQuoteAssetVolume() + ", pump" + ", high = " + wave.getHigh() + ", low = " + wave.getLow() + ", rate = " + rateInChannel);
+//                else
+//                System.out.println(response.getQuoteAssetVolume() + ", dump" + ", high = " + wave.getHigh() + ", low = " + wave.getLow() + ", rate = " + rateInChannel);
+//                wave.setValue(responseClose);
+//            }
+//            return wave.getWaveAction().getValue();
+//        } else {
+//            if (response.getVolume().equals("true")) {
+//                wave.setValue(responseClose);
+//            }
+//            if (wave.getHigh() - wave.getLow() < delta){
+//                wave.setReady(false);
+//                wave.setStatusCounter(1);
+//                return wave.getWaveAction().getValue();
+//            }
+//            if (wave.getDumpSignal()) {
+//                System.out.println(response.getQuoteAssetVolume() + ", dump, rate = " + rateInChannel +
+//                        ", high = " + wave.getHigh() + ", low = " + wave.getLow());
+//
+//                if (responseClose <= wave.getLow()) {
+//                    wave.setLow(responseClose);
+//                    wave.setWaveAction(WaveAction.WAIT);
+//                    return wave.getWaveAction().getValue();
+//                }
+//                if (responseClose >= wave.getLow() + onePercent * buyPercent) {
+//                    wave.setWaveAction(WaveAction.BUY);
+//                    wave.setDumpSignal(false);
+//                    wave.setPumpSignal(true);
+//                    wave.setHigh(responseClose);
+//                    return wave.getWaveAction().getValue();
+//                }
+//            }
+//            if (wave.getPumpSignal()) {
+//                System.out.println(response.getQuoteAssetVolume() + ", pump, rate = " + rateInChannel +
+//                        ", high = " + wave.getHigh() + ", low = " + wave.getLow());
+//                if (responseClose >= wave.getHigh()) {
+//                    wave.setHigh(responseClose);
+//                    wave.setWaveAction(WaveAction.WAIT);
+//                    return wave.getWaveAction().getValue();
+//                }
+//                if (responseClose <= wave.getLow() + onePercent * sellPercent) {
+//                    wave.setWaveAction(WaveAction.SELL);
+//                    wave.setDumpSignal(true);
+//                    wave.setPumpSignal(false);
+//                    wave.setLow(responseClose);
+//                    return wave.getWaveAction().getValue();
+//                }
+//            }
+//        }
+//
+//        return 0.0;
+//    }
+
+//    @Override
+//    public double rate(WaveDto wave, Candlestick response) {
+//        double responseClose = Double.parseDouble(response.getClose());
+//        double onePercent = (wave.getHigh() - wave.getLow()) * 0.01;
+//        double rateInChannel = (responseClose - wave.getLow()) / onePercent;
+//        double deltaLocal = wave.getHigh() - wave.getLow();
+////        if (response.getVolume().equals("true")) {
+////            wave.getEma1().update(responseClose);
+////            wave.getEma2().update(responseClose);
+////            wave.getEma3().update(responseClose);
+////        }
+////
+////        double ema1 = wave.getEma1().get();
+////        double ema2 = wave.getEma2().get();
+////        double ema3 = wave.getEma3().get();
+////        if (responseClose <= wave.getLow() && WaveAction.BUY.equals(wave.getWaveAction())) {
+////            wave.setWaveAction(WaveAction.SELL);
+////            wave.setDumpSignal(true);
+////            wave.setPumpSignal(false);
+////            wave.setLow(responseClose);
+////            return wave.getWaveAction().getValue();
+////        }
+////        if (!wave.getReady()) {
+////            Scanner scanner = new Scanner(System.in);
+////            System.out.println("time = " + response.getQuoteAssetVolume());
+////            System.out.println("low = ");
+////            String low = scanner.nextLine();
+////            System.out.println("high = ");
+////            String high = scanner.nextLine();
+////            wave.setLow(Double.valueOf(low));
+////            wave.setHigh(Double.valueOf(high));
+////            wave.setReady(true);
+////            wave.setDumpSignal(true);
+////            wave.setWaveAction(WaveAction.WAIT);
+////            return wave.getWaveAction().getValue();
+//
+//
+//            /*
+//            wave.setWaveAction(WaveAction.WAIT);
+////            System.out.println(response.getQuoteAssetVolume() + " " + ema1 + " " + ema2 + " " + ema3);
+//            if (ema3 >= ema2 && ema2 >= ema1){
+//                wave.setLow(Math.min(responseClose, wave.getLow()));
+//                wave.setHigh(Math.max(responseClose, wave.getHigh()));
+////                wave.setExtremumTouched(true);
+////                wave.setLow(responseClose);
+//            }
+//            if (ema3 >= ema2 + 0.0001 && ema2 >= ema1 + 0.0001 && responseClose >= ema1) {
+//                wave.setReady(true);
+//                wave.setDumpSignal(false);
+//                wave.setPumpSignal(true);
+////                System.out.println(response.getQuoteAssetVolume());
+//            }
+//            wave.setValue(responseClose);
+//            return wave.getWaveAction().getValue();
+//             */
+////        } else {
+//        if (response.getVolume().equals("true")) {
+//            wave.setValue(responseClose);
+//        }
+//        wave.setWaveAction(WaveAction.WAIT);
+//
+//        if (responseClose < wave.getLow()) {
+//            wave.setLow(responseClose);
+//            wave.setDumpSignal(true);
+//            wave.setPumpSignal(false);
+////            if (ema1 < ema2 && ema2 < ema3){
+//                wave.setWaveAction(WaveAction.SELL);
+////            }
+//            return wave.getWaveAction().getValue();
+//        }
+//        if (responseClose > wave.getHigh()) {
+//            wave.setHigh(responseClose);
+////            wave.setWaveAction(WaveAction.BUY); // todo check
+//            wave.setDumpSignal(false);
+//            wave.setPumpSignal(true);
+//            return wave.getWaveAction().getValue();
+//        }
+////        if (ema1 < ema2 && ema2 < ema3){
+////            wave.setWaveAction(WaveAction.SELL);
+////            return wave.getWaveAction().getValue();
+////        }
+//        if (wave.getHigh() - wave.getLow() > delta) {
+//            if (wave.getDumpSignal()) {
+////                System.out.println(response.getQuoteAssetVolume() + ", dump, rate = " + rateInChannel +
+////                        ", high = " + wave.getHigh() + ", low = " + wave.getLow());
+//                if (responseClose >= wave.getLow() + onePercent * buyPercent) {
+//                    wave.setWaveAction(WaveAction.BUY);
+//                    wave.setDumpSignal(false);
+//                    wave.setPumpSignal(true);
+//                    wave.setHigh(responseClose);
+//                    return wave.getWaveAction().getValue();
+//                }
+//            }
+//            if (wave.getPumpSignal()) {
+////                System.out.println(response.getQuoteAssetVolume() + ", pump, rate = " + rateInChannel +
+////                        ", high = " + wave.getHigh() + ", low = " + wave.getLow());
+//                if (responseClose <= wave.getLow() + onePercent * sellPercent) {
+//                    wave.setWaveAction(WaveAction.SELL);
+//                    wave.setDumpSignal(true);
+//                    wave.setPumpSignal(false);
+//                    wave.setLow(responseClose);
+//                    return wave.getWaveAction().getValue();
+//                }
+//            }
+//        }
+////        }
+//
+//        return 0.0;
+//    }

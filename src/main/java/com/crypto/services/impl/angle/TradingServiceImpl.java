@@ -1,0 +1,192 @@
+package com.crypto.services.impl.angle;
+
+import com.binance.api.client.BinanceApiClientFactory;
+import com.binance.api.client.BinanceApiRestClient;
+import com.binance.api.client.BinanceApiWebSocketClient;
+import com.binance.api.client.domain.event.CandlestickEvent;
+import com.binance.api.client.domain.market.CandlestickInterval;
+import com.crypto.controllers.UserController;
+import com.crypto.dto.WaveDto;
+import com.crypto.enums.WaveAction;
+import com.crypto.services.TradingService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.time.LocalTime;
+import java.util.concurrent.atomic.AtomicReference;
+
+@Service
+@RequiredArgsConstructor
+public class TradingServiceImpl implements TradingService {
+    private final BinanceApiClientFactory clientFactory;
+    private final BinanceApiRestClient restClient;
+    private final BinanceApiWebSocketClient webSocketClient;
+    AtomicReference<Double> USDT = new AtomicReference<>(1000.0);
+    AtomicReference<Double> totalUsdt = new AtomicReference<>(1000.0);
+    AtomicReference<Double> amount = new AtomicReference<>(0.0);
+    AtomicReference<Double> firstClose = new AtomicReference<>(0.0);
+    AtomicReference<Double> lastClose = new AtomicReference<>(0.0);
+
+    private final String SYMBOL = "DOGEUSDT";
+
+    //    private Double delta = 0.003;
+    private final Double DELTA = 0.00476;
+    private final Double DELTA_SELL = 0.0003;
+    private final Double DELTA_BUY = 0.0016;
+    private final Integer SELL_PERCENT = 96;
+    private final Integer BUY_PERCENT = 0;
+
+    @Override
+    public void decision(double decisionRate, WaveDto wave, CandlestickEvent response) {
+        if (decisionRate > 0)
+            buy(decisionRate, wave, response);
+        else
+            sell(decisionRate, wave, response);
+    }
+
+    @Override
+    public double rate(WaveDto wave, CandlestickEvent response) {
+        double responseClose = Double.parseDouble(response.getClose());
+        double onePercent = (wave.getHigh() - wave.getLow()) * 0.01;
+        wave.setWaveAction(WaveAction.WAIT);
+        wave.setClose(responseClose);
+
+        // find trend
+        if (responseClose <= wave.getValue() - DELTA_SELL) {
+            wave.setDumpSignal(true);
+            wave.setPumpSignal(false);
+            wave.setValue(responseClose);
+        }
+        if (responseClose >= wave.getValue() + DELTA_BUY) {
+            wave.setDumpSignal(false);
+            wave.setPumpSignal(true);
+            wave.setValue(responseClose);
+        }
+        // find extremum
+        if (responseClose < wave.getLow()) {
+            wave.setLow(responseClose);
+            return wave.getWaveAction().getValue();
+        }
+        if (responseClose > wave.getHigh()) {
+            wave.setHigh(responseClose);
+            return wave.getWaveAction().getValue();
+        }
+        // trading
+        if (wave.getHigh() - wave.getLow() > DELTA) {
+            if (wave.getDumpSignal()) {
+                if (responseClose >= wave.getLow() + onePercent * BUY_PERCENT) {
+                    wave.setWaveAction(WaveAction.BUY);
+                    wave.setHigh(responseClose);
+                    return wave.getWaveAction().getValue();
+                }
+            }
+            if (wave.getPumpSignal()) {
+                if (responseClose <= wave.getLow() + onePercent * SELL_PERCENT) {
+                    wave.setWaveAction(WaveAction.SELL);
+                    wave.setLow(responseClose);
+                    return wave.getWaveAction().getValue();
+                }
+            }
+        }
+        return wave.getWaveAction().getValue();
+    }
+
+    @Override
+    public void trade(WaveDto wave, CandlestickEvent response) {
+        double decisionRate = rate(wave, response);
+        decision(decisionRate, wave, response);
+    }
+
+    @Override
+    public void startTrading(String symbol) {
+        WaveDto wave = new WaveDto();
+        wave.setSymbol(symbol);
+        webSocketClient.onCandlestickEvent(symbol.toLowerCase(), CandlestickInterval.ONE_MINUTE, (CandlestickEvent response) -> {
+
+            if (firstClose.get() == 0.0)
+                firstClose.updateAndGet(v -> Double.valueOf(response.getClose()));
+
+            lastClose.updateAndGet(v -> Double.valueOf(response.getClose()));
+            trade(wave, response);
+
+            if (WaveAction.WAIT.equals(wave.getWaveAction()))
+                writeResponse(wave);
+        });
+    }
+
+    @Override
+    public void writeAction(WaveAction waveAction, LocalTime time, Double price, AtomicReference<Double> totalUsdt, Double delta, AtomicReference<Double> usdt, String symbol, AtomicReference<Double> amount) {
+        try {
+            Double usdtPassive = USDT.get() * (lastClose.get() / firstClose.get());
+            BufferedWriter writer = new BufferedWriter(new FileWriter("trading/" + symbol, true));
+            String row = String.format("%s %s %s %s %s%n",
+                    waveAction, time, price, totalUsdt, usdtPassive);
+            writer.write(row);
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void writeResponse(WaveDto wave) {
+        try {
+            LocalDate date = LocalDate.now();
+            LocalTime time = LocalTime.now();
+            Double passiveUSDT = USDT.get() * (lastClose.get() / firstClose.get());
+            Double totalUSDT = USDT.get() * (lastClose.get() / firstClose.get());
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter("trading/" + SYMBOL, true));
+            String row = String.format("%s %s %s %s %s %s %s %s%n",
+                    time, wave.getWaveAction(), wave.getClose(), wave.getLow(),
+                    wave.getHigh(), totalUSDT, passiveUSDT, date);
+            writer.write(row);
+            writer.close();
+
+            BufferedWriter writer2 = new BufferedWriter(new FileWriter("responses/" + wave.getSymbol() + "-2021-08-5", true));
+            String row2 = wave.getClose() + " " + time + " " + true + "\n";
+            writer2.write(row2);
+            writer2.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void buy(double decisionRate, WaveDto wave, CandlestickEvent response) {
+        double close = Double.parseDouble(response.getClose());
+        double delta = -USDT.get() * decisionRate;
+        double deltaAmount = -delta / close;
+        totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
+        if (deltaAmount > 10) {
+            USDT.updateAndGet(v -> v + delta + delta * 0.00075);
+            amount.updateAndGet(v -> v + deltaAmount);
+            totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
+            LocalTime time = LocalTime.now();
+            writeResponse(wave);
+            System.out.printf("%s:time = %s, price = %s, total usdt = %s, delta = %s, usdt = %s, %s = %s%n",
+                    wave.getWaveAction(), time, close, totalUsdt, delta, USDT, SYMBOL, amount);
+        }
+    }
+
+    @Override
+    public void sell(double decisionRate, WaveDto wave, CandlestickEvent response) {
+        double close = Double.parseDouble(response.getClose());
+        double delta = -decisionRate * amount.get();
+        totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
+        if (delta > 10) {
+            USDT.updateAndGet(v -> v + delta * close - delta * close * 0.00075);
+            amount.updateAndGet(v -> v - delta);
+            totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
+            LocalTime time = LocalTime.now();
+            writeResponse(wave);
+            System.out.printf("%s:time = %s, price = %s, total usdt = %s, delta = %s, usdt = %s, %s = %s%n",
+                    wave.getWaveAction(), time, close, totalUsdt, delta * close, USDT, SYMBOL, amount);
+        }
+    }
+
+}
