@@ -5,7 +5,6 @@ import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.BinanceApiWebSocketClient;
 import com.binance.api.client.domain.event.CandlestickEvent;
 import com.binance.api.client.domain.market.CandlestickInterval;
-import com.crypto.controllers.UserController;
 import com.crypto.dto.WaveDto;
 import com.crypto.enums.WaveAction;
 import com.crypto.services.TradingService;
@@ -25,8 +24,9 @@ public class TradingServiceImpl implements TradingService {
     private final BinanceApiClientFactory clientFactory;
     private final BinanceApiRestClient restClient;
     private final BinanceApiWebSocketClient webSocketClient;
-    AtomicReference<Double> USDT = new AtomicReference<>(1000.0);
-    AtomicReference<Double> totalUsdt = new AtomicReference<>(1000.0);
+    private final Double START_USDT = 1000.0;
+    AtomicReference<Double> USDT = new AtomicReference<>(START_USDT);
+    AtomicReference<Double> totalUsdt = new AtomicReference<>(START_USDT);
     AtomicReference<Double> amount = new AtomicReference<>(0.0);
     AtomicReference<Double> firstClose = new AtomicReference<>(0.0);
     AtomicReference<Double> lastClose = new AtomicReference<>(0.0);
@@ -34,11 +34,12 @@ public class TradingServiceImpl implements TradingService {
     private final String SYMBOL = "DOGEUSDT";
 
     //    private Double delta = 0.003;
-    private final Double DELTA = 0.00476;
-    private final Double DELTA_SELL = 0.0003;
-    private final Double DELTA_BUY = 0.0016;
-    private final Integer SELL_PERCENT = 96;
-    private final Integer BUY_PERCENT = 0;
+//    private final Double DELTA = 0.00476;
+    private final Double DELTA = 0.0015;
+    private final Double DELTA_DUMP = 0.0003;
+    private final Double DELTA_PUMP = 0.0016;
+    private final Integer SELL_PERCENT = 84;
+    private final Integer BUY_PERCENT = 14;
 
     @Override
     public void decision(double decisionRate, WaveDto wave, CandlestickEvent response) {
@@ -56,12 +57,12 @@ public class TradingServiceImpl implements TradingService {
         wave.setClose(responseClose);
 
         // find trend
-        if (responseClose <= wave.getValue() - DELTA_SELL) {
+        if (responseClose <= wave.getValue() - DELTA_DUMP) {
             wave.setDumpSignal(true);
             wave.setPumpSignal(false);
             wave.setValue(responseClose);
         }
-        if (responseClose >= wave.getValue() + DELTA_BUY) {
+        if (responseClose >= wave.getValue() + DELTA_PUMP) {
             wave.setDumpSignal(false);
             wave.setPumpSignal(true);
             wave.setValue(responseClose);
@@ -105,6 +106,13 @@ public class TradingServiceImpl implements TradingService {
     public void startTrading(String symbol) {
         WaveDto wave = new WaveDto();
         wave.setSymbol(symbol);
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("trading/" + symbol));
+            writer.write("");
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         webSocketClient.onCandlestickEvent(symbol.toLowerCase(), CandlestickInterval.ONE_MINUTE, (CandlestickEvent response) -> {
 
             if (firstClose.get() == 0.0)
@@ -137,8 +145,8 @@ public class TradingServiceImpl implements TradingService {
         try {
             LocalDate date = LocalDate.now();
             LocalTime time = LocalTime.now();
-            Double passiveUSDT = USDT.get() * (lastClose.get() / firstClose.get());
-            Double totalUSDT = USDT.get() * (lastClose.get() / firstClose.get());
+            Double totalUSDT = USDT.get() + amount.get() * lastClose.get();
+            Double passiveUSDT = START_USDT * (lastClose.get() / firstClose.get());
 
             BufferedWriter writer = new BufferedWriter(new FileWriter("trading/" + SYMBOL, true));
             String row = String.format("%s %s %s %s %s %s %s %s%n",
@@ -147,7 +155,7 @@ public class TradingServiceImpl implements TradingService {
             writer.write(row);
             writer.close();
 
-            BufferedWriter writer2 = new BufferedWriter(new FileWriter("responses/" + wave.getSymbol() + "-2021-08-5", true));
+            BufferedWriter writer2 = new BufferedWriter(new FileWriter("responses/" + wave.getSymbol() + "-" + date, true));
             String row2 = wave.getClose() + " " + time + " " + true + "\n";
             writer2.write(row2);
             writer2.close();

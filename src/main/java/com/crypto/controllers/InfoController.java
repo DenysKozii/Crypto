@@ -13,7 +13,7 @@ import java.util.List;
 
 @Controller
 @AllArgsConstructor
-public class UserController {
+public class InfoController {
 
     private final ReaderServiceImpl readerService;
 

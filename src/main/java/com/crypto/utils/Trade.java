@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class Trade {
     private final BinanceApiWebSocketClient webSocketClient;
     private final TradingSimulatorService tradinSimulatorService;
-    private final TradingService angleService;
+    private final TradingService tradingService;
     private final BinanceApiRestClient restClient;
 
 //    private final String SYMBOL = "XTZUSDT";
@@ -29,7 +29,7 @@ public class Trade {
     }
 
     private void trade() {
-        tradinSimulatorService.learning(SYMBOL);
-//        angleService.startTrading(SYMBOL);
+//        tradinSimulatorService.learning(SYMBOL);
+        tradingService.startTrading(SYMBOL);
     }
 }

@@ -45,7 +45,7 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
     private Integer buyPercent = 0;
 
 //    private Double delta = 0.00476;
-    private Double delta = 0.001;
+    private Double delta = 0.0005;
     private Double DELTA_SELL = 0.0003;
     private Double DELTA_BUY = 0.0016;
 
