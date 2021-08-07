@@ -39,7 +39,7 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
     private final Double DELTA_DUMP = 0.0003;
     private final Double DELTA_PUMP = 0.0016;
     private final Integer SELL_PERCENT = 84;
-    private final Integer BUY_PERCENT = 14;
+    private final Integer BUY_PERCENT = 15;
 
 
     @Override
