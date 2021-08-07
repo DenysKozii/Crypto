@@ -24,60 +24,50 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
     AtomicReference<Double> usdt = new AtomicReference<>(USDT);
     AtomicReference<Double> totalUsdt = new AtomicReference<>(USDT);
     AtomicReference<Double> amount = new AtomicReference<>(0.0);
-    //        private final String SYMBOL = "XTZUSDT";
     private final String SYMBOL = "DOGEUSDT";
-    private final Integer LIMIT = 1000;
-    private final Integer MINUTES = 1720;
 
-
-    private Integer CANDLES = 25;
-    private Integer BUY_MIN = 20;
-    private Integer SELL_HIGH = 65;
-    private Integer SELL = 15;
-
-    private Integer EMA1 = 1;
-    private Integer EMA2 = 1;
-    private Integer EMA3 = 1;
-
-    //    private Integer sellPercent = 90;
-//    private Integer buyPercent = 25;
-    private Integer sellPercent = 96;
-    private Integer buyPercent = 0;
+    //    private Integer SELL_PERCENT = 96;
+//    private Integer BUY_PERCENT = 0;
+    private Integer DNO_PERCENT = 51;
 
 //    private Double delta = 0.00476;
-    private Double delta = 0.0005;
-    private Double DELTA_SELL = 0.0003;
-    private Double DELTA_BUY = 0.0016;
+//    private Double DELTA = 0.0015;
+//    private Double DELTA_DUMP = 0.0003;
+//    private Double DELTA_PUMP = 0.0016;
 
-
+    private final Double DELTA = 0.0015;
+    private final Double DELTA_DUMP = 0.0003;
+    private final Double DELTA_PUMP = 0.0016;
+    private final Integer SELL_PERCENT = 84;
+    private final Integer BUY_PERCENT = 14;
 
 
     @Override
     public void learning(String symbol) {
-        double maxUsdt = 0;
-        double maxsellPercent = 0, maxbuyPercent = 0, maxdelta = 0, maxLastTradeDelta = 0;
-        for (sellPercent = 80; sellPercent <= 100; sellPercent += 1) {
-            for (buyPercent = 0; buyPercent <= 20; buyPercent += 1) {
-//                for (delta = 0.002; delta <= 0.006; delta += 0.0001) {
-                        usdt.set(USDT);
-                        amount.set(0.0);
-                        totalUsdt.set(USDT);
-                        simulateDays(symbol);
-                        System.out.printf("totalUsdt = %s, sellPercent = %s, buyPercent = %s%n", totalUsdt, sellPercent, buyPercent);
-                        if (totalUsdt.get() > maxUsdt) {
-                            maxUsdt = totalUsdt.get();
-                            maxsellPercent = sellPercent;
-                            maxbuyPercent = buyPercent;
-                            maxdelta = delta;
-                        }
-                    }
-        }
-        System.out.printf("maxUsdt = %s%n", maxUsdt);
-        System.out.printf("sellPercent = %s%n", maxsellPercent);
-        System.out.printf("buyPercent = %s%n", maxbuyPercent);
-        System.out.printf("maxdelta = %s%n", maxdelta);
-        System.out.printf("maxLastTradeDelta = %s%n", maxLastTradeDelta);
-//        simulateDays(symbol);
+//        double maxUsdt = 0;
+//        double maxsellPercent = 0, maxbuyPercent = 0, maxdelta = 0, maxLastTradeDelta = 0;
+//        for (DNO_PERCENT = -30; DNO_PERCENT <= 80; DNO_PERCENT += 1) {
+////            for (buyPercent = 0; buyPercent <= 20; buyPercent += 1) {
+////                for (delta = 0.002; delta <= 0.006; delta += 0.0001) {
+//            usdt.set(USDT);
+//            amount.set(0.0);
+//            totalUsdt.set(USDT);
+//            simulateDays(symbol);
+//            System.out.printf("totalUsdt = %s, DNO_PERCENT = %s%n", totalUsdt, DNO_PERCENT);
+//            if (totalUsdt.get() > maxUsdt) {
+//                maxUsdt = totalUsdt.get();
+//                maxsellPercent = SELL_PERCENT;
+//                maxbuyPercent = BUY_PERCENT;
+//                maxdelta = DNO_PERCENT;
+////                        }
+//            }
+//        }
+//        System.out.printf("maxUsdt = %s%n", maxUsdt);
+//        System.out.printf("sellPercent = %s%n", maxsellPercent);
+//        System.out.printf("buyPercent = %s%n", maxbuyPercent);
+//        System.out.printf("maxdelta = %s%n", maxdelta);
+//        System.out.printf("maxLastTradeDelta = %s%n", maxLastTradeDelta);
+        simulateDays(symbol);
     }
 
     @Override
@@ -86,16 +76,19 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
         double onePercent = (wave.getHigh() - wave.getLow()) * 0.01;
         wave.setWaveAction(WaveAction.WAIT);
 
-        if (responseClose <= wave.getValue() - DELTA_SELL) {
+        if (responseClose <= wave.getValue() - DELTA_DUMP) {
             wave.setDumpSignal(true);
             wave.setPumpSignal(false);
             wave.setValue(responseClose);
         }
-        if (responseClose >= wave.getValue() + DELTA_BUY) {
+        if (responseClose >= wave.getValue() + DELTA_PUMP) {
             wave.setDumpSignal(false);
             wave.setPumpSignal(true);
             wave.setValue(responseClose);
         }
+//        if (responseClose <= wave.getActionPrice() - onePercent * DNO_PERCENT && responseClose <= wave.getLow()) {
+//            wave.setWaveAction(WaveAction.SELL);
+//        }
         if (responseClose < wave.getLow()) {
             wave.setLow(responseClose);
             return wave.getWaveAction().getValue();
@@ -104,18 +97,20 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
             wave.setHigh(responseClose);
             return wave.getWaveAction().getValue();
         }
-        if (wave.getHigh() - wave.getLow() > delta) {
+        if (wave.getHigh() - wave.getLow() > DELTA) {
             if (wave.getDumpSignal()) {
-                if (responseClose >= wave.getLow() + onePercent * buyPercent) {
+                if (responseClose >= wave.getLow() + onePercent * BUY_PERCENT) {
                     wave.setWaveAction(WaveAction.BUY);
                     wave.setHigh(responseClose);
+                    wave.setActionPrice(responseClose);
                     return wave.getWaveAction().getValue();
                 }
             }
             if (wave.getPumpSignal()) {
-                if (responseClose <= wave.getLow() + onePercent * sellPercent) {
+                if (responseClose <= wave.getLow() + onePercent * SELL_PERCENT) {
                     wave.setWaveAction(WaveAction.SELL);
                     wave.setLow(responseClose);
+                    wave.setActionPrice(responseClose);
                     return wave.getWaveAction().getValue();
                 }
             }
@@ -127,19 +122,20 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
     @Override
     public void simulateDays(String symbol) {
         ArrayList<String> files = new ArrayList<>();
-        files.add("DOGEUSDT-2021-06-16");
-        files.add("DOGEUSDT-2021-06-17");
-        files.add("DOGEUSDT-2021-07-02");
-        files.add("DOGEUSDT-2021-07-17");
-        files.add("DOGEUSDT-2021-07-20");
-        files.add("DOGEUSDT-2021-07-21-2");
-        files.add("DOGEUSDT-2021-07-21");
-        files.add("DOGEUSDT-2021-07-22");
-        files.add("DOGEUSDT-2021-07-23");
-        files.add("DOGEUSDT-2021-07-24");
-        files.add("DOGEUSDT-2021-07-25");
-        files.add("DOGEUSDT-2021-07-31");
-        files.add("DOGEUSDT-2021-08-6");
+//        files.add("DOGEUSDT-2021-06-16");
+//        files.add("DOGEUSDT-2021-06-17");
+//        files.add("DOGEUSDT-2021-07-02");
+//        files.add("DOGEUSDT-2021-07-17");
+//        files.add("DOGEUSDT-2021-07-20");
+//        files.add("DOGEUSDT-2021-07-21-2");
+//        files.add("DOGEUSDT-2021-07-21");
+//        files.add("DOGEUSDT-2021-07-22");
+//        files.add("DOGEUSDT-2021-07-23");
+//        files.add("DOGEUSDT-2021-07-24");
+//        files.add("DOGEUSDT-2021-07-25");
+//        files.add("DOGEUSDT-2021-07-31");
+//        files.add("DOGEUSDT-2021-08-06");
+        files.add("DOGEUSDT-2021-08-07");
         List<Candlestick> candlesticks = new ArrayList<>();
         for (String filename : files) {
             System.out.println(filename);
@@ -196,7 +192,6 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
                 Candlestick candlestick = new Candlestick();
                 candlestick.setClose(line[0]);
                 candlestick.setQuoteAssetVolume(line[1]);
-                candlestick.setVolume(line[2]);
                 candlesticks.add(candlestick);
             }
             myReader.close();

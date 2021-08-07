@@ -29,7 +29,7 @@ public class Trade {
     }
 
     private void trade() {
-//        tradinSimulatorService.learning(SYMBOL);
-        tradingService.startTrading(SYMBOL);
+        tradinSimulatorService.learning(SYMBOL);
+//        tradingService.startTrading(SYMBOL);
     }
 }

@@ -28,6 +28,8 @@ public class InfoController {
         model.addAttribute("high", readerService.getHigh());
         model.addAttribute("highTime", readerService.getHighTime());
         model.addAttribute("passiveUSDTTime", readerService.getPassiveUSDTTime());
+        Double delta = Double.parseDouble(readerService.getHigh()) - Double.parseDouble(readerService.getLow());
+        model.addAttribute("delta", delta);
         return "info";
     }
 }

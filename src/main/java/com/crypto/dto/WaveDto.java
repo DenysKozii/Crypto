@@ -21,5 +21,6 @@ public class WaveDto {
 
     private Double value = 0.0;
     private Double close = 0.0;
+    private Double actionPrice = 0.0;
 
 }

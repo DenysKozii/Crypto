@@ -4,10 +4,11 @@
 <body>
 <div class="bg-light">
     <div class="container bg-light">
-        <h3>Raised USDT = <small th:text="${USDT}"></small></h3>
+        <h3>Earned USDT = <small th:text="${USDT}"></small></h3>
         <h3>Passive USDT = <small th:text="${passiveUSDT}"></small> from <small th:text="${passiveUSDTTime}"></small></h3>
         <h3>Current low = <small th:text="${low}"></small> at <small th:text="${lowTime}"></small></h3>
         <h3>Current high = <small th:text="${high}"></small> at <small th:text="${highTime}"></small></h3>
+        <h3>Current delta = <small th:text="${delta}"></small></h3>
     </div>
     <table class="table table-hover">
         <thead>
