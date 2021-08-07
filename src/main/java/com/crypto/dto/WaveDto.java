@@ -1,7 +1,7 @@
 package com.crypto.dto;
 
+import com.binance.api.client.domain.event.CandlestickEvent;
 import com.crypto.enums.WaveAction;
-import com.crypto.enums.WaveStatus;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
@@ -17,10 +17,11 @@ public class WaveDto {
     private Boolean pumpSignal = false;
     private Boolean dumpSignal = false;
     private WaveAction waveAction;
-    private WaveStatus waveStatus;
 
     private Double value = 0.0;
     private Double close = 0.0;
     private Double actionPrice = 0.0;
+
+    private CandlestickEvent candlestickEvent;
 
 }

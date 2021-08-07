@@ -8,6 +8,7 @@ import com.binance.api.client.domain.market.CandlestickInterval;
 import com.crypto.dto.WaveDto;
 import com.crypto.enums.WaveAction;
 import com.crypto.services.TradingService;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import java.time.LocalTime;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Service
+@Data
 @RequiredArgsConstructor
 public class TradingServiceImpl implements TradingService {
     private final BinanceApiClientFactory clientFactory;
@@ -42,16 +44,16 @@ public class TradingServiceImpl implements TradingService {
     private final Integer BUY_PERCENT = 14;
 
     @Override
-    public void decision(double decisionRate, WaveDto wave, CandlestickEvent response) {
+    public void decision(double decisionRate, WaveDto wave) {
         if (decisionRate > 0)
-            buy(decisionRate, wave, response);
+            buy(decisionRate, wave);
         else
-            sell(decisionRate, wave, response);
+            sell(decisionRate, wave);
     }
 
     @Override
-    public double rate(WaveDto wave, CandlestickEvent response) {
-        double responseClose = Double.parseDouble(response.getClose());
+    public double rate(WaveDto wave) {
+        double responseClose = Double.parseDouble(wave.getCandlestickEvent().getClose());
         double onePercent = (wave.getHigh() - wave.getLow()) * 0.01;
         wave.setWaveAction(WaveAction.WAIT);
         wave.setClose(responseClose);
@@ -97,9 +99,9 @@ public class TradingServiceImpl implements TradingService {
     }
 
     @Override
-    public void trade(WaveDto wave, CandlestickEvent response) {
-        double decisionRate = rate(wave, response);
-        decision(decisionRate, wave, response);
+    public void trade(WaveDto wave) {
+        double decisionRate = rate(wave);
+        decision(decisionRate, wave);
     }
 
     @Override
@@ -115,29 +117,16 @@ public class TradingServiceImpl implements TradingService {
         }
         webSocketClient.onCandlestickEvent(symbol.toLowerCase(), CandlestickInterval.ONE_MINUTE, (CandlestickEvent response) -> {
 
+            wave.setCandlestickEvent(response);
+
             if (firstClose.get() == 0.0)
                 firstClose.updateAndGet(v -> Double.valueOf(response.getClose()));
 
             lastClose.updateAndGet(v -> Double.valueOf(response.getClose()));
-            trade(wave, response);
+            trade(wave);
 
-            if (WaveAction.WAIT.equals(wave.getWaveAction()))
-                writeResponse(wave);
+            writeResponse(wave);
         });
-    }
-
-    @Override
-    public void writeAction(WaveAction waveAction, LocalTime time, Double price, AtomicReference<Double> totalUsdt, Double delta, AtomicReference<Double> usdt, String symbol, AtomicReference<Double> amount) {
-        try {
-            Double usdtPassive = USDT.get() * (lastClose.get() / firstClose.get());
-            BufferedWriter writer = new BufferedWriter(new FileWriter("trading/" + symbol, true));
-            String row = String.format("%s %s %s %s %s%n",
-                    waveAction, time, price, totalUsdt, usdtPassive);
-            writer.write(row);
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -166,8 +155,8 @@ public class TradingServiceImpl implements TradingService {
     }
 
     @Override
-    public void buy(double decisionRate, WaveDto wave, CandlestickEvent response) {
-        double close = Double.parseDouble(response.getClose());
+    public void buy(double decisionRate, WaveDto wave) {
+        double close = Double.parseDouble(wave.getCandlestickEvent().getClose());
         double delta = -USDT.get() * decisionRate;
         double deltaAmount = -delta / close;
         totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
@@ -176,15 +165,14 @@ public class TradingServiceImpl implements TradingService {
             amount.updateAndGet(v -> v + deltaAmount);
             totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
             LocalTime time = LocalTime.now();
-            writeResponse(wave);
             System.out.printf("%s:time = %s, price = %s, total usdt = %s, delta = %s, usdt = %s, %s = %s%n",
                     wave.getWaveAction(), time, close, totalUsdt, delta, USDT, SYMBOL, amount);
         }
     }
 
     @Override
-    public void sell(double decisionRate, WaveDto wave, CandlestickEvent response) {
-        double close = Double.parseDouble(response.getClose());
+    public void sell(double decisionRate, WaveDto wave) {
+        double close = Double.parseDouble(wave.getCandlestickEvent().getClose());
         double delta = -decisionRate * amount.get();
         totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
         if (delta > 10) {
@@ -192,7 +180,6 @@ public class TradingServiceImpl implements TradingService {
             amount.updateAndGet(v -> v - delta);
             totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
             LocalTime time = LocalTime.now();
-            writeResponse(wave);
             System.out.printf("%s:time = %s, price = %s, total usdt = %s, delta = %s, usdt = %s, %s = %s%n",
                     wave.getWaveAction(), time, close, totalUsdt, delta * close, USDT, SYMBOL, amount);
         }
