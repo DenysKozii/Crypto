@@ -103,10 +103,10 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
         wave.setSymbol(symbol);
         for (int i = 0; i < candlesticks.size() - 2; i++) {
             wave.setCandlestickEvent(candlesticks.get(i));
-            tradingService.trade(wave);
+            tradingService.trade(wave, true);
         }
         wave.setWaveAction(WaveAction.SELL);
-        tradingService.decision(wave.getWaveAction().getValue(), wave);
+        tradingService.decision(wave.getWaveAction().getValue(), wave, true);
         writeResult(candlesticks);
     }
 

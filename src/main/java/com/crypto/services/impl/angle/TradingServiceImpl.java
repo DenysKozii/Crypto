@@ -44,11 +44,11 @@ public class TradingServiceImpl implements TradingService {
     private final Integer BUY_PERCENT = 14;
 
     @Override
-    public void decision(double decisionRate, WaveDto wave) {
+    public void decision(double decisionRate, WaveDto wave, boolean simulate) {
         if (decisionRate > 0)
-            buy(decisionRate, wave);
+            buy(decisionRate, wave, simulate);
         else
-            sell(decisionRate, wave);
+            sell(decisionRate, wave, simulate);
     }
 
     @Override
@@ -99,9 +99,9 @@ public class TradingServiceImpl implements TradingService {
     }
 
     @Override
-    public void trade(WaveDto wave) {
+    public void trade(WaveDto wave, boolean simulate) {
         double decisionRate = rate(wave);
-        decision(decisionRate, wave);
+        decision(decisionRate, wave, simulate);
     }
 
     @Override
@@ -123,7 +123,7 @@ public class TradingServiceImpl implements TradingService {
                 firstClose.updateAndGet(v -> Double.valueOf(response.getClose()));
 
             lastClose.updateAndGet(v -> Double.valueOf(response.getClose()));
-            trade(wave);
+            trade(wave, false);
 
             writeResponse(wave);
         });
@@ -155,7 +155,7 @@ public class TradingServiceImpl implements TradingService {
     }
 
     @Override
-    public void buy(double decisionRate, WaveDto wave) {
+    public void buy(double decisionRate, WaveDto wave, boolean simulate) {
         double close = Double.parseDouble(wave.getCandlestickEvent().getClose());
         double delta = -USDT.get() * decisionRate;
         double deltaAmount = -delta / close;
@@ -165,13 +165,17 @@ public class TradingServiceImpl implements TradingService {
             amount.updateAndGet(v -> v + deltaAmount);
             totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
             LocalTime time = LocalTime.now();
-            System.out.printf("%s:time = %s, price = %s, total usdt = %s, delta = %s, usdt = %s, %s = %s%n",
-                    wave.getWaveAction(), time, close, totalUsdt, delta, USDT, SYMBOL, amount);
+            if (simulate)
+                System.out.printf("%s:time = %s, price = %s, total usdt = %s, delta = %s, usdt = %s, %s = %s%n",
+                        wave.getWaveAction(), wave.getCandlestickEvent().getQuoteAssetVolume(), close, totalUsdt, delta * close, USDT, SYMBOL, amount);
+            else
+                System.out.printf("%s:time = %s, price = %s, total usdt = %s, delta = %s, usdt = %s, %s = %s%n",
+                        wave.getWaveAction(), time, close, totalUsdt, delta * close, USDT, SYMBOL, amount);
         }
     }
 
     @Override
-    public void sell(double decisionRate, WaveDto wave) {
+    public void sell(double decisionRate, WaveDto wave, boolean simulate) {
         double close = Double.parseDouble(wave.getCandlestickEvent().getClose());
         double delta = -decisionRate * amount.get();
         totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
@@ -180,8 +184,12 @@ public class TradingServiceImpl implements TradingService {
             amount.updateAndGet(v -> v - delta);
             totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
             LocalTime time = LocalTime.now();
-            System.out.printf("%s:time = %s, price = %s, total usdt = %s, delta = %s, usdt = %s, %s = %s%n",
-                    wave.getWaveAction(), time, close, totalUsdt, delta * close, USDT, SYMBOL, amount);
+            if (simulate)
+                System.out.printf("%s:time = %s, price = %s, total usdt = %s, delta = %s, usdt = %s, %s = %s%n",
+                        wave.getWaveAction(), wave.getCandlestickEvent().getQuoteAssetVolume(), close, totalUsdt, delta * close, USDT, SYMBOL, amount);
+            else
+                System.out.printf("%s:time = %s, price = %s, total usdt = %s, delta = %s, usdt = %s, %s = %s%n",
+                        wave.getWaveAction(), time, close, totalUsdt, delta * close, USDT, SYMBOL, amount);
         }
     }
 
