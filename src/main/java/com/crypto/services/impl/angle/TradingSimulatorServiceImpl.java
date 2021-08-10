@@ -21,54 +21,40 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
     private final BinanceApiClientFactory clientFactory;
     private final BinanceApiRestClient restClient;
     private final TradingServiceImpl tradingService;
-//    private final Double USDT = 1000.0;
-//    AtomicReference<Double> usdt = new AtomicReference<>(USDT);
-//    AtomicReference<Double> totalUsdt = new AtomicReference<>(USDT);
-//    AtomicReference<Double> amount = new AtomicReference<>(0.0);
     private final String SYMBOL = "DOGEUSDT";
-
-    //    private Integer SELL_PERCENT = 96;
-//    private Integer BUY_PERCENT = 0;
-    private Integer DNO_PERCENT = 51;
-
-//    private Double delta = 0.00476;
-//    private Double DELTA = 0.0015;
-//    private Double DELTA_DUMP = 0.0003;
-//    private Double DELTA_PUMP = 0.0016;
-
-    private final Double DELTA = 0.0015;
-    private final Double DELTA_DUMP = 0.0003;
-    private final Double DELTA_PUMP = 0.0016;
-    private final Integer SELL_PERCENT = 84;
-    private final Integer BUY_PERCENT = 15;
 
 
     @Override
     public void learning(String symbol) {
-//        double maxUsdt = 0;
-//        double maxsellPercent = 0, maxbuyPercent = 0, maxdelta = 0, maxLastTradeDelta = 0;
-//        for (DNO_PERCENT = -30; DNO_PERCENT <= 80; DNO_PERCENT += 1) {
-////            for (buyPercent = 0; buyPercent <= 20; buyPercent += 1) {
-////                for (delta = 0.002; delta <= 0.006; delta += 0.0001) {
-//            usdt.set(USDT);
-//            amount.set(0.0);
-//            totalUsdt.set(USDT);
-//            simulateDays(symbol);
-//            System.out.printf("totalUsdt = %s, DNO_PERCENT = %s%n", totalUsdt, DNO_PERCENT);
-//            if (totalUsdt.get() > maxUsdt) {
-//                maxUsdt = totalUsdt.get();
-//                maxsellPercent = SELL_PERCENT;
-//                maxbuyPercent = BUY_PERCENT;
-//                maxdelta = DNO_PERCENT;
-////                        }
-//            }
-//        }
-//        System.out.printf("maxUsdt = %s%n", maxUsdt);
-//        System.out.printf("sellPercent = %s%n", maxsellPercent);
-//        System.out.printf("buyPercent = %s%n", maxbuyPercent);
-//        System.out.printf("maxdelta = %s%n", maxdelta);
-//        System.out.printf("maxLastTradeDelta = %s%n", maxLastTradeDelta);
+        double maxUsdt = 0;
+        double MAX_DELTA_DUMP = 0, MAX_DELTA_PUMP = 0;
+        for (double DELTA_PUMP = 0.0; DELTA_PUMP <= 0.007; DELTA_PUMP += 0.0001) {
+            for (double DELTA_DUMP = 0.0; DELTA_DUMP <= 0.006; DELTA_DUMP += 0.0001) {
+                tradingService.setDELTA_PUMP(DELTA_PUMP);
+                tradingService.setDELTA_DUMP(DELTA_DUMP);
+                tradingService.setUSDT(tradingService.getSTART_USDT());
+                tradingService.setAmount(0.0);
+                tradingService.setTotalUsdt(tradingService.getSTART_USDT());
+                simulateDays(symbol);
+                System.out.printf("totalUsdt = %s, DELTA_PUMP = %f, DELTA_DUMP = %f%n", tradingService.getTotalUsdt(), DELTA_PUMP, DELTA_DUMP);
+                System.out.printf("totalUsdt = %s, DELTA_PUMP = %f, DELTA_DUMP = %f%n", tradingService.getTotalUsdt(), DELTA_PUMP, DELTA_DUMP);
+                System.out.printf("totalUsdt = %s, DELTA_PUMP = %f, DELTA_DUMP = %f%n", tradingService.getTotalUsdt(), DELTA_PUMP, DELTA_DUMP);
+                if (tradingService.getTotalUsdt() > maxUsdt) {
+                    maxUsdt = tradingService.getTotalUsdt();
+                    MAX_DELTA_DUMP = DELTA_DUMP;
+                    MAX_DELTA_PUMP = DELTA_PUMP;
+                }
+            }
+        }
+        tradingService.setDELTA_PUMP(MAX_DELTA_PUMP);
+        tradingService.setDELTA_DUMP(MAX_DELTA_DUMP);
+        tradingService.setUSDT(tradingService.getSTART_USDT());
+        tradingService.setAmount(0.0);
+        tradingService.setTotalUsdt(tradingService.getSTART_USDT());
         simulateDays(symbol);
+        System.out.printf("maxUsdt = %f%n", maxUsdt);
+        System.out.printf("MAX_DELTA_PUMP = %f%n", MAX_DELTA_PUMP);
+        System.out.printf("MAX_DELTA_DUMP = %f%n", MAX_DELTA_DUMP);
     }
 
     @Override
@@ -86,13 +72,14 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
 //        files.add("DOGEUSDT-2021-07-24");
 //        files.add("DOGEUSDT-2021-07-25");
 //        files.add("DOGEUSDT-2021-07-31");
-//        files.add("DOGEUSDT-2021-08-06");
-        files.add("DOGEUSDT-2021-08-07");
+        files.add("DOGEUSDT-2021-08-06");
+//        files.add("DOGEUSDT-2021-08-07");
         List<CandlestickEvent> candlesticks = new ArrayList<>();
         for (String filename : files) {
             System.out.println(filename);
             candlesticks = readResponses(symbol, filename);
             simulateResponses(symbol, candlesticks);
+            writeResult(candlesticks);
         }
         writeResult(candlesticks);
     }
@@ -105,16 +92,16 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
             wave.setCandlestickEvent(candlesticks.get(i));
             tradingService.trade(wave, true);
         }
-        wave.setWaveAction(WaveAction.SELL);
-        tradingService.decision(wave.getWaveAction().getValue(), wave, true);
-        writeResult(candlesticks);
+        wave.setAction(WaveAction.SELL);
+        tradingService.decision(wave.getAction().getValue(), wave, true);
+//        writeResult(candlesticks);
     }
 
     private void writeResult(List<CandlestickEvent> candlesticks) {
-        tradingService.getTotalUsdt().updateAndGet(v->tradingService.getUSDT().get() + tradingService.getAmount().get() * Double.parseDouble(candlesticks.get(candlesticks.size() - 1).getClose()));
-        System.out.printf("total traded usdt = %s%n", tradingService.getTotalUsdt().get());
-        System.out.printf("usdt passive= %s%n",
-                tradingService.getUSDT().get() * (Double.parseDouble(candlesticks.get(candlesticks.size() - 1).getClose())
+        tradingService.setTotalUsdt(tradingService.getUSDT() + tradingService.getAmount() * Double.parseDouble(candlesticks.get(candlesticks.size() - 1).getClose()));
+        System.out.printf("total traded usdt = %s%n", tradingService.getTotalUsdt());
+        System.out.printf("usdt passive = %s%n",
+                tradingService.getSTART_USDT() * (Double.parseDouble(candlesticks.get(candlesticks.size() - 1).getClose())
                         / Double.parseDouble(candlesticks.get(0).getClose())));
     }
 

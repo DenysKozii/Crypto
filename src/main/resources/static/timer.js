@@ -1,3 +1,5 @@
 setInterval(function () {
-    document.location.href = "http://localhost:8080/";
+    if (document.location.href === "http://localhost:8080/") {
+        document.location.href = "http://localhost:8080/";
+    }
 }, 1000);

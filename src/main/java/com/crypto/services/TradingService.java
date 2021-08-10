@@ -8,6 +8,8 @@ public interface TradingService {
 
     void sell(double decisionRate, WaveDto wave, boolean simulate);
 
+    void writeAction(WaveDto wave, boolean simulate);
+
     void decision(double decisionRate, WaveDto wave, boolean simulate);
 
     double rate(WaveDto wave);

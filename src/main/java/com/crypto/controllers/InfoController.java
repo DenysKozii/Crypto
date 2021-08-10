@@ -8,6 +8,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -19,17 +21,19 @@ public class InfoController {
 
     @GetMapping
     public String infos(Model model) {
-        List<InfoDto> infos = readerService.readStatistics();
-        model.addAttribute("infos", infos);
+        readerService.readStatistics();
         model.addAttribute("USDT", readerService.getUSDT());
         model.addAttribute("passiveUSDT", readerService.getPassiveUSDT());
-        model.addAttribute("low", readerService.getLow());
-        model.addAttribute("lowTime", readerService.getLowTime());
-        model.addAttribute("high", readerService.getHigh());
-        model.addAttribute("highTime", readerService.getHighTime());
         model.addAttribute("passiveUSDTTime", readerService.getPassiveUSDTTime());
-        Double delta = Double.parseDouble(readerService.getHigh()) - Double.parseDouble(readerService.getLow());
-        model.addAttribute("delta", delta);
+        model.addAttribute("status", readerService.getStatus());
         return "info";
+    }
+
+    @GetMapping("/transactions")
+    public String transactions(Model model) {
+        List<InfoDto> infos = readerService.readStatistics();
+        Collections.reverse(infos);
+        model.addAttribute("infos", infos);
+        return "transactions";
     }
 }

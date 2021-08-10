@@ -7,6 +7,7 @@ import com.binance.api.client.domain.event.CandlestickEvent;
 import com.binance.api.client.domain.market.CandlestickInterval;
 import com.crypto.dto.WaveDto;
 import com.crypto.enums.WaveAction;
+import com.crypto.enums.WaveStatus;
 import com.crypto.services.TradingService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,6 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalTime;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @Data
@@ -27,21 +27,30 @@ public class TradingServiceImpl implements TradingService {
     private final BinanceApiRestClient restClient;
     private final BinanceApiWebSocketClient webSocketClient;
     private final Double START_USDT = 1000.0;
-    AtomicReference<Double> USDT = new AtomicReference<>(START_USDT);
-    AtomicReference<Double> totalUsdt = new AtomicReference<>(START_USDT);
-    AtomicReference<Double> amount = new AtomicReference<>(0.0);
-    AtomicReference<Double> firstClose = new AtomicReference<>(0.0);
-    AtomicReference<Double> lastClose = new AtomicReference<>(0.0);
+    private final Double TAX = 0.00075;
+
+    private Double USDT = START_USDT;
+    private Double totalUsdt = START_USDT;
+    private Double amount = 0.0;
+    private Double firstClose = 0.0;
+    private Double lastClose = 0.0;
+
 
     private final String SYMBOL = "DOGEUSDT";
 
+//    private final Integer SELL_PERCENT = 84;
+//    private final Integer BUY_PERCENT = 14;
     //    private Double delta = 0.003;
 //    private final Double DELTA = 0.00476;
-    private final Double DELTA = 0.0015;
-    private final Double DELTA_DUMP = 0.0003;
-    private final Double DELTA_PUMP = 0.0016;
-    private final Integer SELL_PERCENT = 84;
-    private final Integer BUY_PERCENT = 14;
+
+//    private final Double DELTA = 0.0025;
+
+//    private final Double DELTA_DUMP = 0.0003;
+//    private final Double DELTA_PUMP = 0.0016;
+
+    private Double DELTA_DUMP = 0.001;
+    private Double DELTA_PUMP = 0.001;
+
 
     @Override
     public void decision(double decisionRate, WaveDto wave, boolean simulate) {
@@ -54,49 +63,83 @@ public class TradingServiceImpl implements TradingService {
     @Override
     public double rate(WaveDto wave) {
         double responseClose = Double.parseDouble(wave.getCandlestickEvent().getClose());
-        double onePercent = (wave.getHigh() - wave.getLow()) * 0.01;
-        wave.setWaveAction(WaveAction.WAIT);
+        wave.setAction(WaveAction.WAIT);
         wave.setClose(responseClose);
-
-        // find trend
         if (responseClose <= wave.getValue() - DELTA_DUMP) {
-            wave.setDumpSignal(true);
-            wave.setPumpSignal(false);
+            if (WaveStatus.PUMP.equals(wave.getStatus())) {
+//                System.out.printf("%s %s pump->dump%n",
+//                        wave.getCandlestickEvent().getQuoteAssetVolume(), wave.getClose());
+                wave.setAction(WaveAction.SELL);
+            }
+            wave.setStatus(WaveStatus.DUMP);
             wave.setValue(responseClose);
         }
         if (responseClose >= wave.getValue() + DELTA_PUMP) {
-            wave.setDumpSignal(false);
-            wave.setPumpSignal(true);
+            if (WaveStatus.DUMP.equals(wave.getStatus())) {
+//                System.out.printf("%s %s dump->pump%n",
+//                        wave.getCandlestickEvent().getQuoteAssetVolume(), wave.getClose());
+                wave.setAction(WaveAction.BUY);
+            }
+            wave.setStatus(WaveStatus.PUMP);
             wave.setValue(responseClose);
         }
-        // find extremum
-        if (responseClose < wave.getLow()) {
-            wave.setLow(responseClose);
-            return wave.getWaveAction().getValue();
-        }
-        if (responseClose > wave.getHigh()) {
-            wave.setHigh(responseClose);
-            return wave.getWaveAction().getValue();
-        }
-        // trading
-        if (wave.getHigh() - wave.getLow() > DELTA) {
-            if (wave.getDumpSignal()) {
-                if (responseClose >= wave.getLow() + onePercent * BUY_PERCENT) {
-                    wave.setWaveAction(WaveAction.BUY);
-                    wave.setHigh(responseClose);
-                    return wave.getWaveAction().getValue();
-                }
-            }
-            if (wave.getPumpSignal()) {
-                if (responseClose <= wave.getLow() + onePercent * SELL_PERCENT) {
-                    wave.setWaveAction(WaveAction.SELL);
-                    wave.setLow(responseClose);
-                    return wave.getWaveAction().getValue();
-                }
-            }
-        }
-        return wave.getWaveAction().getValue();
+        return wave.getAction().getValue();
     }
+
+//    @Override
+//    public double rate(WaveDto wave) {
+//        double responseClose = Double.parseDouble(wave.getCandlestickEvent().getClose());
+//        double onePercent = (wave.getHigh() - wave.getLow()) * 0.01;
+//        wave.setWaveAction(WaveAction.WAIT);
+//        wave.setClose(responseClose);
+//
+//        // find trend
+//        if (responseClose <= wave.getValue() - DELTA_DUMP) {
+//            if(wave.getPumpSignal())
+//                System.out.printf("%s %s pump->dump%n",
+//                        wave.getCandlestickEvent().getQuoteAssetVolume(), wave.getClose());
+//            wave.setDumpSignal(true);
+//            wave.setPumpSignal(false);
+//            wave.setValue(responseClose);
+//        }
+//        if (responseClose >= wave.getValue() + DELTA_PUMP) {
+//            if(wave.getDumpSignal())
+//                System.out.printf("%s %s dump->pump%n",
+//                        wave.getCandlestickEvent().getQuoteAssetVolume(), wave.getClose());
+//            wave.setDumpSignal(false);
+//            wave.setPumpSignal(true);
+//            wave.setValue(responseClose);
+//        }
+//        // find extremum
+//        if (responseClose < wave.getLow()) {
+//            wave.setLow(responseClose);
+//            return wave.getWaveAction().getValue();
+//        }
+//        if (responseClose > wave.getHigh()) {
+//            wave.setHigh(responseClose);
+//            return wave.getWaveAction().getValue();
+//        }
+//        // trading
+//        if (wave.getHigh() - wave.getLow() > DELTA) {
+//            if (wave.getDumpSignal()) {
+//                if (responseClose >= wave.getLow() + onePercent * BUY_PERCENT && !wave.getBought()) {
+//                    wave.setWaveAction(WaveAction.BUY);
+//                    wave.setHigh(responseClose);
+//                    wave.setBought(true);
+//                    return wave.getWaveAction().getValue();
+//                }
+//            }
+//            if (wave.getPumpSignal()) {
+//                if (responseClose <= wave.getLow() + onePercent * SELL_PERCENT) {
+//                    wave.setWaveAction(WaveAction.SELL);
+//                    wave.setLow(responseClose);
+//                    wave.setBought(false);
+//                }
+//                return wave.getWaveAction().getValue();
+//            }
+//        }
+//        return wave.getWaveAction().getValue();
+//    }
 
     @Override
     public void trade(WaveDto wave, boolean simulate) {
@@ -119,10 +162,10 @@ public class TradingServiceImpl implements TradingService {
 
             wave.setCandlestickEvent(response);
 
-            if (firstClose.get() == 0.0)
-                firstClose.updateAndGet(v -> Double.valueOf(response.getClose()));
+            if (firstClose == 0.0)
+                firstClose = Double.valueOf(response.getClose());
 
-            lastClose.updateAndGet(v -> Double.valueOf(response.getClose()));
+            lastClose = Double.valueOf(response.getClose());
             trade(wave, false);
 
             writeResponse(wave);
@@ -134,13 +177,13 @@ public class TradingServiceImpl implements TradingService {
         try {
             LocalDate date = LocalDate.now();
             LocalTime time = LocalTime.now();
-            Double totalUSDT = USDT.get() + amount.get() * lastClose.get();
-            Double passiveUSDT = START_USDT * (lastClose.get() / firstClose.get());
+            Double totalUSDT = USDT + amount * lastClose;
+            Double passiveUSDT = START_USDT * (lastClose / firstClose);
 
             BufferedWriter writer = new BufferedWriter(new FileWriter("trading/" + SYMBOL, true));
-            String row = String.format("%s %s %s %s %s %s %s %s%n",
-                    time, wave.getWaveAction(), wave.getClose(), wave.getLow(),
-                    wave.getHigh(), totalUSDT, passiveUSDT, date);
+            String row = String.format("%s %s %s %s %s %s %s%n",
+                    time, wave.getAction(), wave.getClose(),
+                    totalUSDT, passiveUSDT, wave.getStatus(), date);
             writer.write(row);
             writer.close();
 
@@ -157,40 +200,38 @@ public class TradingServiceImpl implements TradingService {
     @Override
     public void buy(double decisionRate, WaveDto wave, boolean simulate) {
         double close = Double.parseDouble(wave.getCandlestickEvent().getClose());
-        double delta = -USDT.get() * decisionRate;
+        double delta = -USDT * decisionRate;
         double deltaAmount = -delta / close;
-        totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
+        totalUsdt = USDT + amount * close;
         if (deltaAmount > 10) {
-            USDT.updateAndGet(v -> v + delta + delta * 0.00075);
-            amount.updateAndGet(v -> v + deltaAmount);
-            totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
-            LocalTime time = LocalTime.now();
-            if (simulate)
-                System.out.printf("%s:time = %s, price = %s, total usdt = %s, delta = %s, usdt = %s, %s = %s%n",
-                        wave.getWaveAction(), wave.getCandlestickEvent().getQuoteAssetVolume(), close, totalUsdt, delta * close, USDT, SYMBOL, amount);
-            else
-                System.out.printf("%s:time = %s, price = %s, total usdt = %s, delta = %s, usdt = %s, %s = %s%n",
-                        wave.getWaveAction(), time, close, totalUsdt, delta * close, USDT, SYMBOL, amount);
+            USDT += delta + delta * TAX;
+            amount += deltaAmount;
+            totalUsdt = USDT + amount * close;
+            writeAction(wave, simulate);
         }
     }
 
     @Override
     public void sell(double decisionRate, WaveDto wave, boolean simulate) {
         double close = Double.parseDouble(wave.getCandlestickEvent().getClose());
-        double delta = -decisionRate * amount.get();
-        totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
+        double delta = -decisionRate * amount;
+        totalUsdt = USDT + amount * close;
         if (delta > 10) {
-            USDT.updateAndGet(v -> v + delta * close - delta * close * 0.00075);
-            amount.updateAndGet(v -> v - delta);
-            totalUsdt.updateAndGet(v -> USDT.get() + amount.get() * close);
-            LocalTime time = LocalTime.now();
-            if (simulate)
-                System.out.printf("%s:time = %s, price = %s, total usdt = %s, delta = %s, usdt = %s, %s = %s%n",
-                        wave.getWaveAction(), wave.getCandlestickEvent().getQuoteAssetVolume(), close, totalUsdt, delta * close, USDT, SYMBOL, amount);
-            else
-                System.out.printf("%s:time = %s, price = %s, total usdt = %s, delta = %s, usdt = %s, %s = %s%n",
-                        wave.getWaveAction(), time, close, totalUsdt, delta * close, USDT, SYMBOL, amount);
+            USDT += delta * close - delta * close * TAX;
+            amount -= delta;
+            totalUsdt = USDT + amount * close;
+            writeAction(wave, simulate);
         }
     }
 
+    @Override
+    public void writeAction(WaveDto wave, boolean simulate) {
+        LocalTime time = LocalTime.now();
+        if (simulate)
+            System.out.printf("%s:time = %s, price = %s, total usdt = %s, usdt = %s, %s = %s%n",
+                    wave.getAction(), wave.getCandlestickEvent().getQuoteAssetVolume(), wave.getClose(), totalUsdt, USDT, SYMBOL, amount);
+        else
+            System.out.printf("%s:time = %s, price = %s, total usdt = %s, usdt = %s, %s = %s%n",
+                    wave.getAction(), time, wave.getClose(), totalUsdt, USDT, SYMBOL, amount);
+    }
 }

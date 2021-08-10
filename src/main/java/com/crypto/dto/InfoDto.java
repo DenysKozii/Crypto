@@ -11,8 +11,7 @@ public class InfoDto {
     private String time;
     private String date;
     private String price;
-    private String low;
-    private String high;
     private String usdt;
     private String usdtPassive;
+    private String status;
 }

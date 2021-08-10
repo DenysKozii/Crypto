@@ -21,11 +21,8 @@ import java.util.Scanner;
 public class ReaderServiceImpl implements ReaderService {
     private String passiveUSDT;
     private String USDT;
-    private String low = "0.0";
-    private String lowTime = "0.0";
-    private String high = "0.0";
-    private String highTime = "0.0";
     private String passiveUSDTTime = "0.0";
+    private String status = "WAIT";
 
     @Override
     public List<InfoDto> readStatistics() {
@@ -39,21 +36,15 @@ public class ReaderServiceImpl implements ReaderService {
                 infoDto.setTime(line[0]);
                 infoDto.setAction(line[1]);
                 infoDto.setPrice(line[2]);
-                infoDto.setLow(line[3]);
-                infoDto.setHigh(line[4]);
-                infoDto.setUsdt(line[5]);
-                infoDto.setUsdtPassive(line[6]);
-                infoDto.setDate(line[7]);
+                infoDto.setUsdt(line[3]);
+                infoDto.setUsdtPassive(line[4]);
+                infoDto.setStatus(line[5]);
+                infoDto.setDate(line[6]);
                 passiveUSDT = infoDto.getUsdtPassive();
                 USDT = infoDto.getUsdt();
-                if (!low.equals(infoDto.getLow()))
-                    lowTime = infoDto.getTime();
-                if (!high.equals(infoDto.getHigh()))
-                    highTime = infoDto.getTime();
+                status = infoDto.getStatus();
                 if (passiveUSDTTime.equals("0.0"))
                     passiveUSDTTime = infoDto.getTime();
-                low = infoDto.getLow();
-                high = infoDto.getHigh();
                 if (!"WAIT".equals(infoDto.getAction()))
                     infos.add(infoDto);
             }
