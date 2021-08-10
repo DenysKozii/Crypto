@@ -29,7 +29,9 @@ public class Trade {
     }
 
     private void trade() {
-        tradinSimulatorService.learning(SYMBOL);
+        tradinSimulatorService.learningDelta(SYMBOL);
+//        tradinSimulatorService.learningSellPercent(SYMBOL);
+//        tradinSimulatorService.learningBuyPercent(SYMBOL);
 //        tradingService.startTrading(SYMBOL);
     }
 }

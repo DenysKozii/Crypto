@@ -37,11 +37,11 @@ public class TradingServiceImpl implements TradingService {
 
     //    private Double delta = 0.003;
 //    private final Double DELTA = 0.00476;
-    private final Double DELTA = 0.0015;
+    private Double DELTA = 0.0015;
     private final Double DELTA_DUMP = 0.0003;
     private final Double DELTA_PUMP = 0.0016;
-    private final Integer SELL_PERCENT = 84;
-    private final Integer BUY_PERCENT = 14;
+    private Integer SELL_PERCENT = 84;
+    private Integer BUY_PERCENT = 14;
 
     @Override
     public void decision(double decisionRate, WaveDto wave) {

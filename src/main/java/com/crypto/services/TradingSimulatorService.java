@@ -10,7 +10,10 @@ public interface TradingSimulatorService {
 
     void simulateDays(String symbol);
 
-    void learning(String symbol);
+//    void learning(String symbol);
+    void learningDelta(String symbol);
+    void learningSellPercent(String symbol);
+    void learningBuyPercent(String symbol);
 
     List<CandlestickEvent> readResponses(String symbol, String filename);
 

@@ -25,50 +25,117 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
 //    AtomicReference<Double> usdt = new AtomicReference<>(USDT);
 //    AtomicReference<Double> totalUsdt = new AtomicReference<>(USDT);
 //    AtomicReference<Double> amount = new AtomicReference<>(0.0);
-    private final String SYMBOL = "DOGEUSDT";
+//    private final String SYMBOL = "DOGEUSDT";
 
-    //    private Integer SELL_PERCENT = 96;
-//    private Integer BUY_PERCENT = 0;
-    private Integer DNO_PERCENT = 51;
-
-//    private Double delta = 0.00476;
-//    private Double DELTA = 0.0015;
-//    private Double DELTA_DUMP = 0.0003;
-//    private Double DELTA_PUMP = 0.0016;
-
-    private final Double DELTA = 0.0015;
-    private final Double DELTA_DUMP = 0.0003;
-    private final Double DELTA_PUMP = 0.0016;
-    private final Integer SELL_PERCENT = 84;
-    private final Integer BUY_PERCENT = 15;
-
-
+/*
     @Override
     public void learning(String symbol) {
-//        double maxUsdt = 0;
-//        double maxsellPercent = 0, maxbuyPercent = 0, maxdelta = 0, maxLastTradeDelta = 0;
+        double maxUsdt = 0;
+        double maxsellPercent = 0, maxbuyPercent = 0, maxdelta = 0, maxLastTradeDelta = 0;
 //        for (DNO_PERCENT = -30; DNO_PERCENT <= 80; DNO_PERCENT += 1) {
-////            for (buyPercent = 0; buyPercent <= 20; buyPercent += 1) {
-////                for (delta = 0.002; delta <= 0.006; delta += 0.0001) {
-//            usdt.set(USDT);
-//            amount.set(0.0);
-//            totalUsdt.set(USDT);
-//            simulateDays(symbol);
-//            System.out.printf("totalUsdt = %s, DNO_PERCENT = %s%n", totalUsdt, DNO_PERCENT);
-//            if (totalUsdt.get() > maxUsdt) {
-//                maxUsdt = totalUsdt.get();
-//                maxsellPercent = SELL_PERCENT;
-//                maxbuyPercent = BUY_PERCENT;
-//                maxdelta = DNO_PERCENT;
-////                        }
-//            }
-//        }
-//        System.out.printf("maxUsdt = %s%n", maxUsdt);
-//        System.out.printf("sellPercent = %s%n", maxsellPercent);
-//        System.out.printf("buyPercent = %s%n", maxbuyPercent);
-//        System.out.printf("maxdelta = %s%n", maxdelta);
-//        System.out.printf("maxLastTradeDelta = %s%n", maxLastTradeDelta);
-        simulateDays(symbol);
+//        for (Integer buyPercent = 0; buyPercent <= 20; buyPercent += 1) {
+        for (Integer sellPercent = 80; sellPercent <= 95; sellPercent += 1) {
+            //tradingService.setSELL_PERCENT(sellPercent);
+
+            tradingService.getUSDT().updateAndGet(v -> tradingService.getSTART_USDT());
+            tradingService.getAmount().updateAndGet(v -> 0.0);
+            tradingService.getTotalUsdt().updateAndGet(v -> tradingService.getSTART_USDT());
+            simulateDays(symbol);
+            System.out.printf("totalUsdt = %s", tradingService.getTotalUsdt().get());
+            if (tradingService.getTotalUsdt().get() > maxUsdt) {
+                maxUsdt = tradingService.getTotalUsdt().get();
+                maxsellPercent = tradingService.getSELL_PERCENT();
+                maxbuyPercent = tradingService.getBUY_PERCENT();
+                maxdelta = tradingService.getDELTA();
+            }
+        }
+        System.out.printf("maxUsdt = %s%n", maxUsdt);
+        System.out.printf("sellPercent = %s%n", maxsellPercent);
+        System.out.printf("buyPercent = %s%n", maxbuyPercent);
+        System.out.printf("maxdelta = %s%n", maxdelta);
+        System.out.printf("maxLastTradeDelta = %s%n", maxLastTradeDelta);
+//        simulateDays(symbol);
+    }
+*/
+    @Override
+    public void learningDelta(String symbol) {
+        double maxUsdt = 0;
+        double maxsellPercent = 0, maxbuyPercent = 0, maxdelta = 0, maxLastTradeDelta = 0;
+        for (double delta = 0.002; delta <= 0.006; delta += 0.0001) {
+            tradingService.setDELTA(delta);
+
+            tradingService.getUSDT().updateAndGet(v -> tradingService.getSTART_USDT());
+            tradingService.getAmount().updateAndGet(v -> 0.0);
+            tradingService.getTotalUsdt().updateAndGet(v -> tradingService.getSTART_USDT());
+            simulateDays(symbol);
+            System.out.printf("totalUsdt = %s", tradingService.getTotalUsdt().get());
+            if (tradingService.getTotalUsdt().get() > maxUsdt) {
+                maxUsdt = tradingService.getTotalUsdt().get();
+                maxsellPercent = tradingService.getSELL_PERCENT();
+                maxbuyPercent = tradingService.getBUY_PERCENT();
+                maxdelta = delta;
+            }
+        }
+        System.out.printf("maxUsdt = %s%n", maxUsdt);
+        System.out.printf("sellPercent = %s%n", maxsellPercent);
+        System.out.printf("buyPercent = %s%n", maxbuyPercent);
+        System.out.printf("LEARNING: maxdelta = %s%n", maxdelta);
+        System.out.printf("maxLastTradeDelta = %s%n", maxLastTradeDelta);
+//        simulateDays(symbol);
+    }
+
+    @Override
+    public void learningSellPercent(String symbol) {
+        double maxUsdt = 0;
+        double maxsellPercent = 0, maxbuyPercent = 0, maxdelta = 0, maxLastTradeDelta = 0;
+        for (Integer sellPercent = 80; sellPercent <= 95; sellPercent += 1) {
+            tradingService.setSELL_PERCENT(sellPercent);
+
+            tradingService.getUSDT().updateAndGet(v -> tradingService.getSTART_USDT());
+            tradingService.getAmount().updateAndGet(v -> 0.0);
+            tradingService.getTotalUsdt().updateAndGet(v -> tradingService.getSTART_USDT());
+            simulateDays(symbol);
+            System.out.printf("totalUsdt = %s", tradingService.getTotalUsdt().get());
+            if (tradingService.getTotalUsdt().get() > maxUsdt) {
+                maxUsdt = tradingService.getTotalUsdt().get();
+                maxsellPercent = sellPercent;
+                maxbuyPercent = tradingService.getBUY_PERCENT();
+                maxdelta = tradingService.getDELTA();
+            }
+        }
+        System.out.printf("maxUsdt = %s%n", maxUsdt);
+        System.out.printf("LEARNING: sellPercent = %s%n", maxsellPercent);
+        System.out.printf("buyPercent = %s%n", maxbuyPercent);
+        System.out.printf("maxdelta = %s%n", maxdelta);
+        System.out.printf("maxLastTradeDelta = %s%n", maxLastTradeDelta);
+//        simulateDays(symbol);
+    }
+
+    @Override
+    public void learningBuyPercent(String symbol) {
+        double maxUsdt = 0;
+        double maxsellPercent = 0, maxbuyPercent = 0, maxdelta = 0, maxLastTradeDelta = 0;
+        for (Integer buyPercent = 1; buyPercent <= 20; buyPercent += 1) {
+            tradingService.setBUY_PERCENT(buyPercent);
+
+            tradingService.getUSDT().updateAndGet(v -> tradingService.getSTART_USDT());
+            tradingService.getAmount().updateAndGet(v -> 0.0);
+            tradingService.getTotalUsdt().updateAndGet(v -> tradingService.getSTART_USDT());
+            simulateDays(symbol);
+            System.out.printf("totalUsdt = %s", tradingService.getTotalUsdt().get());
+            if (tradingService.getTotalUsdt().get() > maxUsdt) {
+                maxUsdt = tradingService.getTotalUsdt().get();
+                maxsellPercent = tradingService.getSELL_PERCENT();
+                maxbuyPercent = buyPercent;
+                maxdelta = tradingService.getDELTA();
+            }
+        }
+        System.out.printf("maxUsdt = %s%n", maxUsdt);
+        System.out.printf("sellPercent = %s%n", maxsellPercent);
+        System.out.printf("LEARNING: buyPercent = %s%n", maxbuyPercent);
+        System.out.printf("maxdelta = %s%n", maxdelta);
+        System.out.printf("maxLastTradeDelta = %s%n", maxLastTradeDelta);
+//        simulateDays(symbol);
     }
 
     @Override
@@ -86,8 +153,8 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
 //        files.add("DOGEUSDT-2021-07-24");
 //        files.add("DOGEUSDT-2021-07-25");
 //        files.add("DOGEUSDT-2021-07-31");
-//        files.add("DOGEUSDT-2021-08-06");
-        files.add("DOGEUSDT-2021-08-07");
+        files.add("DOGEUSDT-2021-08-06");
+//        files.add("DOGEUSDT-2021-08-07");
         List<CandlestickEvent> candlesticks = new ArrayList<>();
         for (String filename : files) {
             System.out.println(filename);
