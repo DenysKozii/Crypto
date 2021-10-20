@@ -9,30 +9,17 @@ import java.util.List;
 
 public interface TradeSimulatorService1 {
 
-    void simulate(String symbol);
+//    void simulate(String symbol);
 
-    void buy(double decisionRate, ChannelDto channelDto);
-
-    void sell(double decisionRate, ChannelDto channelDto);
-
-    void decision(double decisionRate, ChannelDto channelDto);
 
     List<Candlestick> fillArray();
 
     void writeStatistics(String symbol);
 
-    void learning(String symbol);
-
-    List<Candlestick> readStatistics(String symbol);
-
-    ChannelDto channel(List<Candlestick> candlesticks, int alpha);
+//    List<Candlestick> readStatistics(String symbol);
 
     String logTime(long milliseconds);
 
-    double rate(ChannelDto channelDto, WaveDto timer);
-
-    void trade(List<Candlestick> candlesticks, WaveDto wave);
-
-    public Candlestick mapToCandlestick(String line);
+//    Candlestick mapToCandlestick(String line);
 
 }

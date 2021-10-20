@@ -2,6 +2,7 @@ package com.crypto.utils;
 
 import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.BinanceApiWebSocketClient;
+import com.crypto.archive.TradeSimulatorService1;
 import com.crypto.services.TradingService;
 import com.crypto.services.TradingSimulatorService;
 import lombok.RequiredArgsConstructor;
@@ -16,11 +17,13 @@ import org.springframework.stereotype.Component;
 public class Trade {
     private final BinanceApiWebSocketClient webSocketClient;
     private final TradingSimulatorService tradinSimulatorService;
+    private final TradeSimulatorService1 tradeSimulator1Service;
     private final TradingService tradingService;
     private final BinanceApiRestClient restClient;
 
 //    private final String SYMBOL = "XTZUSDT";
-    private final String SYMBOL = "DOGEUSDT";
+//    private final String SYMBOL = "DOGEUSDT";
+    private final String SYMBOL = "XRPUSDT";
 
     @EventListener(ApplicationReadyEvent.class)
     public void firstInit() {
@@ -29,7 +32,8 @@ public class Trade {
     }
 
     private void trade() {
-//        tradinSimulatorService.learning(SYMBOL);
-        tradingService.startTrading(SYMBOL);
+//        tradeSimulator1Service.writeStatistics(SYMBOL);
+        tradinSimulatorService.learning(SYMBOL, true);
+//        tradingService.startTrading(SYMBOL);
     }
 }

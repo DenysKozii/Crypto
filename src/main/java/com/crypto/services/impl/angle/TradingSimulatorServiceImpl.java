@@ -3,6 +3,7 @@ package com.crypto.services.impl.angle;
 import com.binance.api.client.BinanceApiClientFactory;
 import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.domain.event.CandlestickEvent;
+import com.binance.api.client.domain.market.Candlestick;
 import com.crypto.dto.WaveDto;
 import com.crypto.enums.WaveAction;
 import com.crypto.services.TradingSimulatorService;
@@ -21,21 +22,20 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
     private final BinanceApiClientFactory clientFactory;
     private final BinanceApiRestClient restClient;
     private final TradingServiceImpl tradingService;
-    private final String SYMBOL = "DOGEUSDT";
 
 
     @Override
-    public void learning(String symbol) {
+    public void learning(String symbol, boolean simulate) {
         double maxUsdt = 0;
         double MAX_DELTA_DUMP = 0, MAX_DELTA_PUMP = 0;
-        for (double DELTA_PUMP = 0.0; DELTA_PUMP <= 0.007; DELTA_PUMP += 0.0001) {
-            for (double DELTA_DUMP = 0.0; DELTA_DUMP <= 0.006; DELTA_DUMP += 0.0001) {
+        for (double DELTA_PUMP = 1.006750; DELTA_PUMP <= 1.006750; DELTA_PUMP += 0.00025) {
+            for (double DELTA_DUMP = 0.972500; DELTA_DUMP >= 0.972500; DELTA_DUMP -= 0.0025) {
                 tradingService.setDELTA_PUMP(DELTA_PUMP);
                 tradingService.setDELTA_DUMP(DELTA_DUMP);
                 tradingService.setUSDT(tradingService.getSTART_USDT());
                 tradingService.setAmount(0.0);
                 tradingService.setTotalUsdt(tradingService.getSTART_USDT());
-                simulateDays(symbol);
+                simulateDays(symbol, simulate);
                 System.out.printf("totalUsdt = %s, DELTA_PUMP = %f, DELTA_DUMP = %f%n", tradingService.getTotalUsdt(), DELTA_PUMP, DELTA_DUMP);
                 System.out.printf("totalUsdt = %s, DELTA_PUMP = %f, DELTA_DUMP = %f%n", tradingService.getTotalUsdt(), DELTA_PUMP, DELTA_DUMP);
                 System.out.printf("totalUsdt = %s, DELTA_PUMP = %f, DELTA_DUMP = %f%n", tradingService.getTotalUsdt(), DELTA_PUMP, DELTA_DUMP);
@@ -51,49 +51,37 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
         tradingService.setUSDT(tradingService.getSTART_USDT());
         tradingService.setAmount(0.0);
         tradingService.setTotalUsdt(tradingService.getSTART_USDT());
-        simulateDays(symbol);
+        simulateDays(symbol, simulate);
         System.out.printf("maxUsdt = %f%n", maxUsdt);
         System.out.printf("MAX_DELTA_PUMP = %f%n", MAX_DELTA_PUMP);
         System.out.printf("MAX_DELTA_DUMP = %f%n", MAX_DELTA_DUMP);
     }
 
     @Override
-    public void simulateDays(String symbol) {
+    public void simulateDays(String symbol, boolean simulate) {
         ArrayList<String> files = new ArrayList<>();
-//        files.add("DOGEUSDT-2021-06-16");
-//        files.add("DOGEUSDT-2021-06-17");
-//        files.add("DOGEUSDT-2021-07-02");
-//        files.add("DOGEUSDT-2021-07-17");
-//        files.add("DOGEUSDT-2021-07-20");
-//        files.add("DOGEUSDT-2021-07-21-2");
-//        files.add("DOGEUSDT-2021-07-21");
-//        files.add("DOGEUSDT-2021-07-22");
-//        files.add("DOGEUSDT-2021-07-23");
-//        files.add("DOGEUSDT-2021-07-24");
-//        files.add("DOGEUSDT-2021-07-25");
-//        files.add("DOGEUSDT-2021-07-31");
-        files.add("DOGEUSDT-2021-08-06");
-//        files.add("DOGEUSDT-2021-08-07");
+        files.add(symbol);
         List<CandlestickEvent> candlesticks = new ArrayList<>();
         for (String filename : files) {
             System.out.println(filename);
             candlesticks = readResponses(symbol, filename);
-            simulateResponses(symbol, candlesticks);
+            candlesticks = candlesticks.subList(candlesticks.size()-10*1440, candlesticks.size());
+            simulateResponses(symbol, candlesticks, simulate);
             writeResult(candlesticks);
         }
         writeResult(candlesticks);
     }
 
     @Override
-    public void simulateResponses(String symbol, List<CandlestickEvent> candlesticks) {
+    public void simulateResponses(String symbol, List<CandlestickEvent> candlesticks, boolean simulate) {
         WaveDto wave = new WaveDto();
         wave.setSymbol(symbol);
         for (int i = 0; i < candlesticks.size() - 2; i++) {
             wave.setCandlestickEvent(candlesticks.get(i));
-            tradingService.trade(wave, true);
+            tradingService.trade(wave, simulate);
         }
         wave.setAction(WaveAction.SELL);
-        tradingService.decision(wave.getAction().getValue(), wave, true);
+        tradingService.decision(wave.getAction().getValue(), wave, simulate);
 //        writeResult(candlesticks);
     }
 
@@ -109,13 +97,11 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
     public List<CandlestickEvent> readResponses(String symbol, String filename) {
         ArrayList<CandlestickEvent> candlesticks = new ArrayList<>();
         try {
-            File file = new File("responses/" + filename);
+            File file = new File("statistics/" + filename);
             Scanner myReader = new Scanner(file);
             while (myReader.hasNextLine()) {
-                String[] line = myReader.nextLine().split(" ");
-                CandlestickEvent candlestick = new CandlestickEvent();
-                candlestick.setClose(line[0]);
-                candlestick.setQuoteAssetVolume(line[1]);
+                String line = myReader.nextLine();
+                CandlestickEvent candlestick = mapToCandlestick(line);
                 candlesticks.add(candlestick);
             }
             myReader.close();
@@ -124,5 +110,22 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
             e.printStackTrace();
         }
         return candlesticks;
+    }
+
+    private CandlestickEvent mapToCandlestick(String line) {
+        String[] strings = line.split(" ");
+        CandlestickEvent candlestick = new CandlestickEvent();
+        candlestick.setOpenTime(Long.valueOf(strings[0]));
+        candlestick.setOpen(strings[1]);
+        candlestick.setHigh(strings[2]);
+        candlestick.setLow(strings[3]);
+        candlestick.setClose(strings[4]);
+        candlestick.setVolume(strings[5]);
+        candlestick.setCloseTime(Long.valueOf(strings[6]));
+        candlestick.setQuoteAssetVolume(strings[7]);
+        candlestick.setNumberOfTrades(Long.valueOf(strings[8]));
+        candlestick.setTakerBuyBaseAssetVolume(strings[9]);
+        candlestick.setTakerBuyQuoteAssetVolume(strings[10]);
+        return candlestick;
     }
 }

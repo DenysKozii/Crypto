@@ -13,11 +13,14 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalTime;
+import java.util.Date;
 
 @Service
 @Data
@@ -38,18 +41,8 @@ public class TradingServiceImpl implements TradingService {
 
     private final String SYMBOL = "DOGEUSDT";
 
-//    private final Integer SELL_PERCENT = 84;
-//    private final Integer BUY_PERCENT = 14;
-    //    private Double delta = 0.003;
-//    private final Double DELTA = 0.00476;
-
-//    private final Double DELTA = 0.0025;
-
-//    private final Double DELTA_DUMP = 0.0003;
-//    private final Double DELTA_PUMP = 0.0016;
-
-    private Double DELTA_DUMP = 0.001;
-    private Double DELTA_PUMP = 0.001;
+    private Double DELTA_DUMP = 0.999;
+    private Double DELTA_PUMP = 1.001;
 
 
     @Override
@@ -65,19 +58,16 @@ public class TradingServiceImpl implements TradingService {
         double responseClose = Double.parseDouble(wave.getCandlestickEvent().getClose());
         wave.setAction(WaveAction.WAIT);
         wave.setClose(responseClose);
-        if (responseClose <= wave.getValue() - DELTA_DUMP) {
+        String time = logTime(wave.getCandlestickEvent().getOpenTime()).substring(9, 14);
+        if (responseClose < wave.getValue() * DELTA_DUMP) {
             if (WaveStatus.PUMP.equals(wave.getStatus())) {
-//                System.out.printf("%s %s pump->dump%n",
-//                        wave.getCandlestickEvent().getQuoteAssetVolume(), wave.getClose());
                 wave.setAction(WaveAction.SELL);
             }
             wave.setStatus(WaveStatus.DUMP);
             wave.setValue(responseClose);
         }
-        if (responseClose >= wave.getValue() + DELTA_PUMP) {
+        if (responseClose > wave.getValue() * DELTA_PUMP) {
             if (WaveStatus.DUMP.equals(wave.getStatus())) {
-//                System.out.printf("%s %s dump->pump%n",
-//                        wave.getCandlestickEvent().getQuoteAssetVolume(), wave.getClose());
                 wave.setAction(WaveAction.BUY);
             }
             wave.setStatus(WaveStatus.PUMP);
@@ -85,61 +75,6 @@ public class TradingServiceImpl implements TradingService {
         }
         return wave.getAction().getValue();
     }
-
-//    @Override
-//    public double rate(WaveDto wave) {
-//        double responseClose = Double.parseDouble(wave.getCandlestickEvent().getClose());
-//        double onePercent = (wave.getHigh() - wave.getLow()) * 0.01;
-//        wave.setWaveAction(WaveAction.WAIT);
-//        wave.setClose(responseClose);
-//
-//        // find trend
-//        if (responseClose <= wave.getValue() - DELTA_DUMP) {
-//            if(wave.getPumpSignal())
-//                System.out.printf("%s %s pump->dump%n",
-//                        wave.getCandlestickEvent().getQuoteAssetVolume(), wave.getClose());
-//            wave.setDumpSignal(true);
-//            wave.setPumpSignal(false);
-//            wave.setValue(responseClose);
-//        }
-//        if (responseClose >= wave.getValue() + DELTA_PUMP) {
-//            if(wave.getDumpSignal())
-//                System.out.printf("%s %s dump->pump%n",
-//                        wave.getCandlestickEvent().getQuoteAssetVolume(), wave.getClose());
-//            wave.setDumpSignal(false);
-//            wave.setPumpSignal(true);
-//            wave.setValue(responseClose);
-//        }
-//        // find extremum
-//        if (responseClose < wave.getLow()) {
-//            wave.setLow(responseClose);
-//            return wave.getWaveAction().getValue();
-//        }
-//        if (responseClose > wave.getHigh()) {
-//            wave.setHigh(responseClose);
-//            return wave.getWaveAction().getValue();
-//        }
-//        // trading
-//        if (wave.getHigh() - wave.getLow() > DELTA) {
-//            if (wave.getDumpSignal()) {
-//                if (responseClose >= wave.getLow() + onePercent * BUY_PERCENT && !wave.getBought()) {
-//                    wave.setWaveAction(WaveAction.BUY);
-//                    wave.setHigh(responseClose);
-//                    wave.setBought(true);
-//                    return wave.getWaveAction().getValue();
-//                }
-//            }
-//            if (wave.getPumpSignal()) {
-//                if (responseClose <= wave.getLow() + onePercent * SELL_PERCENT) {
-//                    wave.setWaveAction(WaveAction.SELL);
-//                    wave.setLow(responseClose);
-//                    wave.setBought(false);
-//                }
-//                return wave.getWaveAction().getValue();
-//            }
-//        }
-//        return wave.getWaveAction().getValue();
-//    }
 
     @Override
     public void trade(WaveDto wave, boolean simulate) {
@@ -227,11 +162,18 @@ public class TradingServiceImpl implements TradingService {
     @Override
     public void writeAction(WaveDto wave, boolean simulate) {
         LocalTime time = LocalTime.now();
-        if (simulate)
+        if (simulate) {
             System.out.printf("%s:time = %s, price = %s, total usdt = %s, usdt = %s, %s = %s%n",
-                    wave.getAction(), wave.getCandlestickEvent().getQuoteAssetVolume(), wave.getClose(), totalUsdt, USDT, SYMBOL, amount);
-        else
+                    wave.getAction(), logTime(wave.getCandlestickEvent().getCloseTime()), wave.getClose(), totalUsdt, USDT, SYMBOL, amount);
+        } else {
             System.out.printf("%s:time = %s, price = %s, total usdt = %s, usdt = %s, %s = %s%n",
                     wave.getAction(), time, wave.getClose(), totalUsdt, USDT, SYMBOL, amount);
+        }
+    }
+
+    private String logTime(long milliseconds) {
+        Date currentDate = new Date(milliseconds);
+        DateFormat df = new SimpleDateFormat("dd:MM:yy:HH:mm:ss");
+        return df.format(currentDate);
     }
 }
