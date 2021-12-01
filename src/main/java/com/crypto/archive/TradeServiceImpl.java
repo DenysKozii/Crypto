@@ -6,7 +6,7 @@
 //import com.binance.api.client.domain.event.CandlestickEvent;
 //import com.binance.api.client.domain.market.CandlestickInterval;
 //import com.crypto.dto.ChannelDto;
-//import com.crypto.dto.WaveDto;
+//import com.crypto.controllers.WaveDto;
 //import com.crypto.enums.WaveAction;
 //import lombok.RequiredArgsConstructor;
 //import org.springframework.stereotype.Service;

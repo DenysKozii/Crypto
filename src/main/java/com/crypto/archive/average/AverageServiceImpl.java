@@ -5,7 +5,7 @@
 //import com.binance.api.client.BinanceApiWebSocketClient;
 //import com.binance.api.client.domain.event.CandlestickEvent;
 //import com.binance.api.client.domain.market.CandlestickInterval;
-//import com.crypto.dto.WaveDto;
+//import com.crypto.controllers.WaveDto;
 //import com.crypto.enums.WaveAction;
 //import com.crypto.archive.AverageService;
 //import lombok.RequiredArgsConstructor;

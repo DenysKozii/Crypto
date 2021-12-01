@@ -21,20 +21,19 @@ import java.util.Objects;
 @EnableScheduling
 @SpringBootApplication
 public class Application {
+    private static final String apiKey = "IA2v3GQGb4YJKdpdPZmhvlmQyyZCuP58axyri9hlMVEx0lwCwERQeWXuPmZ8k1E9";
+    private static final String secret = "tw2z8h8Z0jIhRMjKFz5QkAG8ulXr9HvjCWhqVBSOOcMg6GAUUaJwbToodQ4u8cX3";
+
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
-//        System.out.println((1525651199999L - 1525046400000L)/60/60/60);
-//        BinanceApiClientFactory factory = BinanceApiClientFactory.newInstance("IA2v3GQGb4YJKdpdPZmhvlmQyyZCuP58axyri9hlMVEx0lwCwERQeWXuPmZ8k1E9", "tw2z8h8Z0jIhRMjKFz5QkAG8ulXr9HvjCWhqVBSOOcMg6GAUUaJwbToodQ4u8cX3");
+
+//        BinanceApiClientFactory factory = BinanceApiClientFactory.newInstance(apiKey, secret);
 //        BinanceApiRestClient client = factory.newRestClient();
 //        Account account = client.getAccount();
-//        System.out.println(account.getAssetBalance("XRP").getFree());
-
+//        System.out.println(account.getAssetBalance("DOGE").getFree());
 //        NewOrderResponse newOrderResponse = client.newOrder(marketBuy("XRPUSDT", "11"));
 //        List<Trade> fills = newOrderResponse.getFills();
 //        System.out.println(newOrderResponse.getClientOrderId());
-
-//        BinanceApiWebSocketClient webSocketClient = BinanceApiClientFactory.newInstance().newWebSocketClient();
-//        webSocketClient.onCandlestickEvent("xrpusdt", CandlestickInterval.ONE_MINUTE, System.out::println);
 
     }
 }

@@ -1,13 +1,10 @@
 package com.crypto.archive;
 
 import com.binance.api.client.domain.event.CandlestickEvent;
-import com.binance.api.client.domain.market.Candlestick;
-import com.crypto.dto.ChannelDto;
-import com.crypto.dto.WaveDto;
+import com.crypto.controllers.WaveDto;
 import com.crypto.enums.WaveAction;
 
 import java.time.LocalTime;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public interface AverageService {

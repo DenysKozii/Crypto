@@ -15,6 +15,8 @@ public class EMA implements Indicator {
     private final boolean historyNeeded;
     private String fileName;
 
+    private int iterations;
+
     public EMA(List<Double> closingPrices, int period)
     {
         this(closingPrices, period, false);
@@ -25,6 +27,7 @@ public class EMA implements Indicator {
         this.historyNeeded = historyNeeded;
         this.multiplier = 2.0 / (double) (period + 1);
         this.EMAhistory = new ArrayList<>();
+        this.iterations = 1;
         init(closingPrices);
     }
 
@@ -58,6 +61,7 @@ public class EMA implements Indicator {
     @Override
     public void update(double newPrice) {
         // EMA = (Close - EMA(previousBar)) * multiplier + EMA(previousBar)
+        iterations++;
         currentEMA = (newPrice - currentEMA) * multiplier + currentEMA;
 
         if (historyNeeded) EMAhistory.add(currentEMA);
@@ -79,5 +83,13 @@ public class EMA implements Indicator {
 
     public int getPeriod() {
         return period;
+    }
+
+    public int getIterations() {
+        return iterations;
+    }
+
+    public void setIterations(int iterations) {
+        this.iterations = iterations;
     }
 }

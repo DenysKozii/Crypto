@@ -1,6 +1,6 @@
 package com.crypto.services;
 
-import com.crypto.dto.WaveDto;
+import com.crypto.controllers.WaveDto;
 
 public interface TradingService {
 

@@ -22,22 +22,24 @@ import java.util.concurrent.TimeUnit;
 public class TradeSimulatorService1Impl implements TradeSimulatorService1 {
     private final BinanceApiRestClient restClient;
     private final Integer LIMIT = 1440;
+//    private final Integer LIMIT = 288;
     private String SYMBOL;
 
     @Override
-    public List<Candlestick> fillArray() {
+    public List<Candlestick> fillArray(int monthStart, int monthEnd, int dayStart, int dayEnd) {
         List<Candlestick> candlesticks = new ArrayList<>();
         SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
-        for (int j = 4; j <= 10; j++) {
-            for (int i = 0; i <= 31; i++) {
-                String startTime = String.format("%s-0%s-2021 00:01:00", i, j);
-                String endTime = String.format("%s-0%s-2021 00:00:00", i + 1, j);
+        for (int j = monthStart; j <= monthEnd; j++) {
+            for (int i = dayStart; i <= dayEnd; i++) {
+                String startTime = String.format("%s-%s-2021 00:01:00", i, j);
+                String endTime = String.format("%s-%s-2021 00:00:00", i + 1, j);
                 try {
                     Date dateStart = sdf.parse(startTime);
                     Date dateEnd = sdf.parse(endTime);
+//                    candlesticks.addAll(restClient.getCandlestickBars(SYMBOL, CandlestickInterval.FIVE_MINUTES, LIMIT, dateStart.getTime(), dateEnd.getTime()));
                     candlesticks.addAll(restClient.getCandlestickBars(SYMBOL, CandlestickInterval.ONE_MINUTE, LIMIT, dateStart.getTime(), dateEnd.getTime()));
-                    startTime = String.format("%s-0%s-2021 16:41:00", i, j);
-                    endTime = String.format("%s-0%s-2021 00:00:00", i + 1, j);
+                    startTime = String.format("%s-%s-2021 16:41:00", i, j);
+                    endTime = String.format("%s-%s-2021 00:00:00", i + 1, j);
                     dateStart = sdf.parse(startTime);
                     dateEnd = sdf.parse(endTime);
                     candlesticks.addAll(restClient.getCandlestickBars(SYMBOL, CandlestickInterval.ONE_MINUTE, LIMIT, dateStart.getTime(), dateEnd.getTime()));
@@ -48,15 +50,16 @@ public class TradeSimulatorService1Impl implements TradeSimulatorService1 {
                 }
             }
         }
+
         return candlesticks;
     }
 
     @Override
-    public void writeStatistics(String symbol) {
+    public void writeStatistics(String symbol, int monthStart, int monthEnd, int dayStart, int dayEnd) {
         try {
             SYMBOL = symbol;
             BufferedWriter writer = new BufferedWriter(new FileWriter("statistics/" + symbol));
-            List<Candlestick> candlesticks = fillArray();
+            List<Candlestick> candlesticks = fillArray(monthStart, monthEnd, dayStart, dayEnd);
             for (Candlestick c : candlesticks) {
                 String stringBuilder =
                         c.getOpenTime() + " " +
@@ -74,6 +77,7 @@ public class TradeSimulatorService1Impl implements TradeSimulatorService1 {
                 writer.write(stringBuilder);
             }
             writer.close();
+            System.out.println("Finish writing");
         } catch (IOException e) {
             e.printStackTrace();
         }

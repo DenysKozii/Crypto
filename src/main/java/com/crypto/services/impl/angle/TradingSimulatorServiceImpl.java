@@ -3,9 +3,9 @@ package com.crypto.services.impl.angle;
 import com.binance.api.client.BinanceApiClientFactory;
 import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.domain.event.CandlestickEvent;
-import com.binance.api.client.domain.market.Candlestick;
-import com.crypto.dto.WaveDto;
+import com.crypto.controllers.WaveDto;
 import com.crypto.enums.WaveAction;
+import com.crypto.indicators.EMA;
 import com.crypto.services.TradingSimulatorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,34 +27,48 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
     @Override
     public void learning(String symbol, boolean simulate) {
         double maxUsdt = 0;
-        double MAX_DELTA_DUMP = 0, MAX_DELTA_PUMP = 0;
-        for (double DELTA_PUMP = 1.006750; DELTA_PUMP <= 1.006750; DELTA_PUMP += 0.00025) {
-            for (double DELTA_DUMP = 0.972500; DELTA_DUMP >= 0.972500; DELTA_DUMP -= 0.0025) {
-                tradingService.setDELTA_PUMP(DELTA_PUMP);
-                tradingService.setDELTA_DUMP(DELTA_DUMP);
-                tradingService.setUSDT(tradingService.getSTART_USDT());
-                tradingService.setAmount(0.0);
-                tradingService.setTotalUsdt(tradingService.getSTART_USDT());
-                simulateDays(symbol, simulate);
-                System.out.printf("totalUsdt = %s, DELTA_PUMP = %f, DELTA_DUMP = %f%n", tradingService.getTotalUsdt(), DELTA_PUMP, DELTA_DUMP);
-                System.out.printf("totalUsdt = %s, DELTA_PUMP = %f, DELTA_DUMP = %f%n", tradingService.getTotalUsdt(), DELTA_PUMP, DELTA_DUMP);
-                System.out.printf("totalUsdt = %s, DELTA_PUMP = %f, DELTA_DUMP = %f%n", tradingService.getTotalUsdt(), DELTA_PUMP, DELTA_DUMP);
-                if (tradingService.getTotalUsdt() > maxUsdt) {
-                    maxUsdt = tradingService.getTotalUsdt();
-                    MAX_DELTA_DUMP = DELTA_DUMP;
-                    MAX_DELTA_PUMP = DELTA_PUMP;
-                }
-            }
-        }
-        tradingService.setDELTA_PUMP(MAX_DELTA_PUMP);
-        tradingService.setDELTA_DUMP(MAX_DELTA_DUMP);
-        tradingService.setUSDT(tradingService.getSTART_USDT());
-        tradingService.setAmount(0.0);
-        tradingService.setTotalUsdt(tradingService.getSTART_USDT());
+        int MAX_PERIOD = 0;
+//        for (int period = 1; period < 220; period++) {
+//            tradingService.setUSDT(tradingService.getSTART_USDT());
+//            tradingService.setAmount(0.0);
+//            tradingService.setTotalUsdt(tradingService.getSTART_USDT());
+//            simulateDays(symbol, simulate);
+//            System.out.printf("totalUsdt = %s, PERIOD = %s%n", tradingService.getTotalUsdt(), period);
+//            System.out.printf("totalUsdt = %s, PERIOD = %s%n", tradingService.getTotalUsdt(), period);
+//            System.out.printf("totalUsdt = %s, PERIOD = %s%n", tradingService.getTotalUsdt(), period);
+//            if (tradingService.getTotalUsdt() > maxUsdt) {
+//                maxUsdt = tradingService.getTotalUsdt();
+//                MAX_PERIOD = period;
+//            }
+//        }
+//        double MAX_DELTA_DUMP = 0, MAX_DELTA_PUMP = 0;
+//        for (double DELTA_PUMP = 1.006750; DELTA_PUMP <= 1.006750; DELTA_PUMP += 0.00025) {
+//            for (double DELTA_DUMP = 0.972500; DELTA_DUMP >= 0.972500; DELTA_DUMP -= 0.0025) {
+//                tradingService.setDELTA_PUMP(DELTA_PUMP);
+//                tradingService.setDELTA_DUMP(DELTA_DUMP);
+//                tradingService.setUSDT(tradingService.getSTART_USDT());
+//                tradingService.setAmount(0.0);
+//                tradingService.setTotalUsdt(tradingService.getSTART_USDT());
+//                simulateDays(symbol, simulate);
+//                System.out.printf("totalUsdt = %s, DELTA_PUMP = %f, DELTA_DUMP = %f%n", tradingService.getTotalUsdt(), DELTA_PUMP, DELTA_DUMP);
+//                System.out.printf("totalUsdt = %s, DELTA_PUMP = %f, DELTA_DUMP = %f%n", tradingService.getTotalUsdt(), DELTA_PUMP, DELTA_DUMP);
+//                System.out.printf("totalUsdt = %s, DELTA_PUMP = %f, DELTA_DUMP = %f%n", tradingService.getTotalUsdt(), DELTA_PUMP, DELTA_DUMP);
+//                if (tradingService.getTotalUsdt() > maxUsdt) {
+//                    maxUsdt = tradingService.getTotalUsdt();
+//                    MAX_DELTA_DUMP = DELTA_DUMP;
+//                    MAX_DELTA_PUMP = DELTA_PUMP;
+//                }
+//            }
+//        }
+//        tradingService.setDELTA_PUMP(MAX_DELTA_PUMP);
+//        tradingService.setDELTA_DUMP(MAX_DELTA_DUMP);
+//        tradingService.setUSDT(tradingService.getSTART_USDT());
+//        tradingService.setAmount(0.0);
+//        tradingService.setTotalUsdt(tradingService.getSTART_USDT());
+//        period = MAX_PERIOD;
         simulateDays(symbol, simulate);
         System.out.printf("maxUsdt = %f%n", maxUsdt);
-        System.out.printf("MAX_DELTA_PUMP = %f%n", MAX_DELTA_PUMP);
-        System.out.printf("MAX_DELTA_DUMP = %f%n", MAX_DELTA_DUMP);
+//        System.out.printf("MAX_DELTA_DUMP = %f%n", MAX_DELTA_DUMP);
     }
 
     @Override
@@ -65,7 +79,7 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
         for (String filename : files) {
             System.out.println(filename);
             candlesticks = readResponses(symbol, filename);
-            candlesticks = candlesticks.subList(candlesticks.size()-10*1440, candlesticks.size());
+//            candlesticks = candlesticks.subList(candlesticks.size(), candlesticks.size());
             simulateResponses(symbol, candlesticks, simulate);
             writeResult(candlesticks);
         }
@@ -76,12 +90,21 @@ public class TradingSimulatorServiceImpl implements TradingSimulatorService {
     public void simulateResponses(String symbol, List<CandlestickEvent> candlesticks, boolean simulate) {
         WaveDto wave = new WaveDto();
         wave.setSymbol(symbol);
+        // 1000, 25 = 1901
+//        wave.getEmas().add(new EMA(new ArrayList<>(), 1000));
+        wave.getEmas().add(new EMA(new ArrayList<>(), 1));
+        double min = 10000;
+        double max = 0;
         for (int i = 0; i < candlesticks.size() - 2; i++) {
             wave.setCandlestickEvent(candlesticks.get(i));
             tradingService.trade(wave, simulate);
+            min = Math.min(tradingService.getTotalUsdt(), min);
+            max = Math.max(tradingService.getTotalUsdt(), max);
         }
         wave.setAction(WaveAction.SELL);
         tradingService.decision(wave.getAction().getValue(), wave, simulate);
+        System.out.println("min = " + min);
+        System.out.println("max = " + max);
 //        writeResult(candlesticks);
     }
 

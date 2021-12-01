@@ -1,9 +1,8 @@
 package com.crypto.archive;
 
-import com.binance.api.client.domain.event.CandlestickEvent;
 import com.binance.api.client.domain.market.Candlestick;
 import com.crypto.dto.ChannelDto;
-import com.crypto.dto.WaveDto;
+import com.crypto.controllers.WaveDto;
 
 import java.util.List;
 

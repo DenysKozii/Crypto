@@ -5,9 +5,9 @@ import com.binance.api.client.BinanceApiRestClient;
 import com.binance.api.client.BinanceApiWebSocketClient;
 import com.binance.api.client.domain.event.CandlestickEvent;
 import com.binance.api.client.domain.market.CandlestickInterval;
-import com.crypto.dto.WaveDto;
 import com.crypto.enums.WaveAction;
-import com.crypto.enums.WaveStatus;
+import com.crypto.indicators.EMA;
+import com.crypto.controllers.WaveDto;
 import com.crypto.services.TradingService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +39,8 @@ public class TradingServiceImpl implements TradingService {
     private Double lastClose = 0.0;
 
 
-    private final String SYMBOL = "DOGEUSDT";
+//    private final String SYMBOL = "SHIBUSDT";
+    private final String SYMBOL = "XRPUSDT";
 
     private Double DELTA_DUMP = 0.999;
     private Double DELTA_PUMP = 1.001;
@@ -56,23 +57,55 @@ public class TradingServiceImpl implements TradingService {
     @Override
     public double rate(WaveDto wave) {
         double responseClose = Double.parseDouble(wave.getCandlestickEvent().getClose());
+//        wave.getEmas().forEach(o->o.update(responseClose));
         wave.setAction(WaveAction.WAIT);
         wave.setClose(responseClose);
         String time = logTime(wave.getCandlestickEvent().getOpenTime()).substring(9, 14);
-        if (responseClose < wave.getValue() * DELTA_DUMP) {
-            if (WaveStatus.PUMP.equals(wave.getStatus())) {
-                wave.setAction(WaveAction.SELL);
-            }
-            wave.setStatus(WaveStatus.DUMP);
-            wave.setValue(responseClose);
+//        if (responseClose < wave.getValue() * DELTA_DUMP) {
+//            if (WaveStatus.PUMP.equals(wave.getStatus())) {
+//                wave.setAction(WaveAction.SELL);
+//            }
+//            wave.setStatus(WaveStatus.DUMP);
+//            wave.setValue(responseClose);
+//        }
+//        if (responseClose > wave.getValue() * DELTA_PUMP) {
+//            if (WaveStatus.DUMP.equals(wave.getStatus())) {
+//                wave.setAction(WaveAction.BUY);
+//            }
+//            wave.setStatus(WaveStatus.PUMP);
+//            wave.setValue(responseClose);
+//        }
+//        boolean readyForTrade = wave.getEmas().stream()
+//                .noneMatch(o->o.getIterations() < o.getPeriod() * 5);
+//        if (readyForTrade) {
+//            double lastEma = 0;
+//            for (EMA ema: wave.getEmas()) {
+//                if (ema.get() < lastEma) {
+//                    readyForTrade = false;
+//                    break;
+//                }
+//                lastEma = ema.get();
+//            }
+//            if (readyForTrade){
+//                if (responseClose >= wave.getPrevClose()) {
+//                    wave.setAction(WaveAction.BUY);
+//                } else {
+//                    wave.setAction(WaveAction.SELL);
+//                }
+//            } else {
+//                wave.setAction(WaveAction.SELL);
+//            }
+//        }
+        if (Double.parseDouble(wave.getCandlestickEvent().getOpen()) < responseClose) {
+            wave.setAction(WaveAction.BUY);
         }
-        if (responseClose > wave.getValue() * DELTA_PUMP) {
-            if (WaveStatus.DUMP.equals(wave.getStatus())) {
-                wave.setAction(WaveAction.BUY);
-            }
-            wave.setStatus(WaveStatus.PUMP);
-            wave.setValue(responseClose);
+//        else {
+//            System.out.println(Double.parseDouble(wave.getCandlestickEvent().getOpen())*1.0003 + " > response = " + responseClose + " : " + (USDT + amount * responseClose));
+//        }
+        if (Double.parseDouble(wave.getCandlestickEvent().getOpen()) > responseClose) {
+            wave.setAction(WaveAction.SELL);
         }
+//        wave.setPrevClose(responseClose);
         return wave.getAction().getValue();
     }
 
@@ -93,7 +126,7 @@ public class TradingServiceImpl implements TradingService {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        webSocketClient.onCandlestickEvent(symbol.toLowerCase(), CandlestickInterval.ONE_MINUTE, (CandlestickEvent response) -> {
+        webSocketClient.onCandlestickEvent(symbol.toLowerCase(), CandlestickInterval.FIVE_MINUTES, (CandlestickEvent response) -> {
 
             wave.setCandlestickEvent(response);
 
@@ -138,7 +171,7 @@ public class TradingServiceImpl implements TradingService {
         double delta = -USDT * decisionRate;
         double deltaAmount = -delta / close;
         totalUsdt = USDT + amount * close;
-        if (deltaAmount > 10) {
+        if (deltaAmount > 10 && delta < -10) {
             USDT += delta + delta * TAX;
             amount += deltaAmount;
             totalUsdt = USDT + amount * close;
@@ -163,11 +196,13 @@ public class TradingServiceImpl implements TradingService {
     public void writeAction(WaveDto wave, boolean simulate) {
         LocalTime time = LocalTime.now();
         if (simulate) {
-            System.out.printf("%s:time = %s, price = %s, total usdt = %s, usdt = %s, %s = %s%n",
-                    wave.getAction(), logTime(wave.getCandlestickEvent().getCloseTime()), wave.getClose(), totalUsdt, USDT, SYMBOL, amount);
+            System.out.printf("%s:time = %s, price = %s, total usdt = %s, usdt = %s, ema_%s = %s%n",
+                    wave.getAction(), logTime(wave.getCandlestickEvent().getCloseTime()), wave.getClose(), totalUsdt, USDT, wave.getEmas().get(0).getPeriod(), wave.getEmas().get(0).get());
         } else {
-            System.out.printf("%s:time = %s, price = %s, total usdt = %s, usdt = %s, %s = %s%n",
-                    wave.getAction(), time, wave.getClose(), totalUsdt, USDT, SYMBOL, amount);
+//            System.out.printf("%s:time = %s, price = %s, total usdt = %s, usdt = %s, ema_%s = %s%n",
+//                    wave.getAction(), time, wave.getClose(), totalUsdt, USDT, wave.getEmas().get(0).getPeriod(), wave.getEmas().get(0).get());
+        System.out.printf("%s:time = %s, price = %s, total usdt = %s, usdt = %s%n",
+                    wave.getAction(), time, wave.getClose(), totalUsdt, USDT);
         }
     }
 

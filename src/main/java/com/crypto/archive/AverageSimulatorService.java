@@ -1,8 +1,7 @@
 package com.crypto.archive;
 
 import com.binance.api.client.domain.market.Candlestick;
-import com.crypto.dto.ChannelDto;
-import com.crypto.dto.WaveDto;
+import com.crypto.controllers.WaveDto;
 import com.crypto.enums.WaveAction;
 
 import java.util.List;
